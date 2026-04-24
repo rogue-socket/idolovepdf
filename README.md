@@ -1,6 +1,6 @@
 # pdftool
 
-A local PDF toolkit CLI. Merge, split, rotate, compress, watermark, number pages, reorder, and convert between PDF and images — all from the terminal.
+A local PDF toolkit with both a CLI and a browser UI. Merge, split, rotate, compress, watermark, number pages, reorder, and convert between PDF and images.
 
 No cloud services, no uploads. Everything runs locally.
 
@@ -16,7 +16,7 @@ git clone <repo-url> && cd idolovepdf
 bash setup.sh
 ```
 
-This creates a `lovepdf` virtual environment and installs the two dependencies (`pymupdf`, `Pillow`).
+This creates a `lovepdf` virtual environment and installs dependencies from `requirements.txt` (`pymupdf`, `Pillow`, and `Flask`).
 
 To activate the environment (required before each session):
 
@@ -29,6 +29,22 @@ Then run:
 ```bash
 python pdftool.py --help
 ```
+
+## Web UI
+
+Run the local web server:
+
+```bash
+python server.py
+```
+
+Then open:
+
+```text
+http://localhost:5000
+```
+
+The web UI exposes the same core operations as the CLI: merge, split, rotate, page numbers, reorder, compress, watermark, PDF to images, and images to PDF.
 
 ## Commands
 

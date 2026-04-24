@@ -59,6 +59,7 @@ echo
 echo "Then run:"
 echo
 echo "    python pdftool.py --help"
+echo "    python server.py"
 echo "    python pdftool.py merge a.pdf b.pdf -o combined.pdf"
 echo "    python pdftool.py split input.pdf -p 1-3,5 -o output.pdf"
 echo "    python pdftool.py rotate input.pdf -d 90 -o rotated.pdf"
