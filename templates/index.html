@@ -4,18 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="static/favicon.svg">
-  <title>pdftool – Local PDF Toolkit</title>
+  <title>pdftool - Local PDF Toolkit</title>
   <style>
-    /* ── Reset & variables ───────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --sidebar-w: 220px;
+      --sidebar-w: 230px;
       --sidebar-bg: #0f1117;
       --sidebar-hover: #1c1f2e;
       --sidebar-active: #1e2240;
       --accent: #5b6af0;
       --accent-h: #4a59e0;
+      --accent-light: rgba(91,106,240,.08);
       --bg: #f4f6fb;
       --surface: #ffffff;
       --border: #e4e8f5;
@@ -26,7 +26,7 @@
       --error: #ef4444;
       --error-bg: #fef2f2;
       --radius: 10px;
-      --shadow: 0 2px 12px rgba(0,0,0,.07);
+      --shadow: 0 2px 12px rgba(0,0,0,.06);
     }
 
     body {
@@ -39,7 +39,7 @@
       display: flex;
     }
 
-    /* ── Sidebar ─────────────────────────────────────────────────────────── */
+    /* ── Sidebar ─────────────────────────────────────────────────────── */
     #sidebar {
       width: var(--sidebar-w);
       flex-shrink: 0;
@@ -59,11 +59,11 @@
       border-bottom: 1px solid #1e2136;
     }
     .brand-logo {
-      width: 32px; height: 32px;
+      width: 34px; height: 34px;
       background: var(--accent);
-      border-radius: 8px;
+      border-radius: 9px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
+      font-size: 17px;
       flex-shrink: 0;
     }
     .brand-name { color: #e2e8f0; font-weight: 700; font-size: 16px; letter-spacing: -.3px; }
@@ -90,17 +90,18 @@
     .nav-item:hover  { background: var(--sidebar-hover); color: #c8d0e0; }
     .nav-item.active { background: var(--sidebar-active); color: #ffffff;
                        border-left-color: var(--accent); }
-    .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+    .nav-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
 
-    /* ── Main ────────────────────────────────────────────────────────────── */
+    /* ── Main ────────────────────────────────────────────────────────── */
     #main {
       flex: 1;
       overflow-y: auto;
-      padding: 32px 36px 48px;
+      padding: 36px 40px 60px;
     }
 
-    .tool-section { display: none; max-width: 720px; }
+    .tool-section { display: none; max-width: 740px; animation: fadeUp .25s ease; }
     .tool-section.active { display: block; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
     .tool-header {
       display: flex;
@@ -121,7 +122,7 @@
     .tool-title { font-size: 22px; font-weight: 700; letter-spacing: -.4px; }
     .tool-desc  { color: var(--muted); font-size: 14px; margin-top: 3px; }
 
-    /* ── Cards ───────────────────────────────────────────────────────────── */
+    /* ── Cards ────────────────────────────────────────────────────────── */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -139,7 +140,7 @@
       margin-bottom: 16px;
     }
 
-    /* ── Drop zone ───────────────────────────────────────────────────────── */
+    /* ── Drop zone ───────────────────────────────────────────────────── */
     .drop-zone {
       border: 2px dashed var(--border);
       border-radius: var(--radius);
@@ -152,21 +153,106 @@
     }
     .drop-zone:hover, .drop-zone.over {
       border-color: var(--accent);
-      background: #f0f2ff;
+      background: var(--accent-light);
+    }
+    .drop-zone.has-file {
+      border-style: solid;
+      border-color: var(--border);
+      padding: 16px 20px;
+      background: var(--bg);
+      cursor: default;
     }
     .drop-zone input[type="file"] {
       position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
     }
+    .drop-zone.has-file input[type="file"] { display: none; }
     .drop-icon { font-size: 36px; display: block; margin-bottom: 10px; }
     .drop-main { font-size: 15px; font-weight: 600; color: var(--text); }
     .drop-hint { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
-    /* ── File list (merge / topdf) ───────────────────────────────────────── */
-    .drop-zone.compact { padding: 16px 20px; }
-    .drop-zone.compact .drop-icon { font-size: 20px; margin: 0 0 4px; }
+    .drop-zone.compact { padding: 18px 20px; }
+    .drop-zone.compact .drop-icon { font-size: 22px; margin: 0 0 4px; }
     .drop-zone.compact .drop-main { font-size: 13px; }
     .drop-zone.compact .drop-hint { font-size: 12px; }
 
+    /* ── File badge (uploaded file indicator) ─────────────────────────── */
+    .file-badge {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%;
+    }
+    .file-badge-icon { font-size: 20px; flex-shrink: 0; }
+    .file-badge-name { flex: 1; font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-badge-size { color: var(--muted); font-size: 12px; flex-shrink: 0; }
+    .file-badge-pages { color: var(--accent); font-size: 12px; font-weight: 600; flex-shrink: 0; }
+    .file-badge-clear {
+      background: none; border: 1px solid var(--border);
+      border-radius: 6px; cursor: pointer;
+      color: var(--muted); font-size: 13px; padding: 4px 8px;
+      transition: all .15s;
+    }
+    .file-badge-clear:hover { color: var(--error); border-color: var(--error); background: var(--error-bg); }
+
+    /* ── PDF Preview strip ────────────────────────────────────────────── */
+    .preview-strip {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 14px 0 6px;
+      scroll-behavior: smooth;
+    }
+    .preview-strip::-webkit-scrollbar { height: 6px; }
+    .preview-strip::-webkit-scrollbar-track { background: transparent; }
+    .preview-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .preview-thumb {
+      flex-shrink: 0;
+      position: relative;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      transition: border-color .15s, box-shadow .15s;
+      cursor: default;
+    }
+    .preview-thumb:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(91,106,240,.15); }
+    .preview-thumb img {
+      display: block;
+      height: 120px;
+      width: auto;
+    }
+    .preview-thumb-label {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,.6);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      text-align: center;
+      padding: 2px 0;
+    }
+    .preview-loading {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .preview-more {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 120px;
+      background: var(--bg);
+      border: 2px dashed var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    /* ── File list (merge / topdf) ───────────────────────────────────── */
     .file-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
     .file-item {
       display: flex; align-items: center; gap: 10px;
@@ -175,7 +261,9 @@
       border-radius: 8px;
       padding: 10px 14px;
       font-size: 13px;
+      transition: background .15s;
     }
+    .file-item:hover { background: #eef1f8; }
     .file-num {
       width: 22px; height: 22px;
       background: var(--accent);
@@ -201,27 +289,7 @@
     .file-btn:hover { background: var(--border); }
     .file-btn.del:hover { background: var(--error-bg); border-color: var(--error); color: var(--error); }
 
-    /* ── Single file badge (after upload) ───────────────────────────────── */
-    .file-badge {
-      display: flex; align-items: center; gap: 10px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      margin-top: 10px;
-      font-size: 13px;
-    }
-    .file-badge-icon { font-size: 18px; }
-    .file-badge-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
-    .file-badge-size { color: var(--muted); font-size: 12px; flex-shrink: 0; }
-    .file-badge-clear {
-      background: none; border: none; cursor: pointer;
-      color: var(--muted); font-size: 16px; padding: 0 4px;
-      line-height: 1;
-    }
-    .file-badge-clear:hover { color: var(--error); }
-
-    /* ── Form controls ───────────────────────────────────────────────────── */
+    /* ── Form controls ───────────────────────────────────────────────── */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full { grid-column: 1 / -1; }
@@ -238,7 +306,7 @@
       background: var(--surface);
       color: var(--text);
       outline: none;
-      transition: border-color .2s;
+      transition: border-color .2s, box-shadow .2s;
     }
     input[type="text"]:focus, input[type="number"]:focus, select:focus {
       border-color: var(--accent);
@@ -253,7 +321,6 @@
       background: var(--surface);
     }
 
-    /* Segmented / pill controls */
     .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
     .seg-btn {
       flex: 1; padding: 8px 4px; border: none;
@@ -266,10 +333,7 @@
     .seg-btn.active { background: var(--accent); color: #fff; }
     .seg-btn:hover:not(.active) { background: var(--bg); }
 
-    /* Position grid (pagenumbers) */
-    .pos-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
-    }
+    .pos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .pos-btn {
       padding: 8px 4px; border: 1px solid var(--border);
       border-radius: 8px; background: var(--surface);
@@ -279,7 +343,6 @@
     .pos-btn:hover { background: var(--bg); }
     .pos-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-    /* Range sliders */
     .range-wrap { display: flex; align-items: center; gap: 12px; }
     .range-wrap input[type="range"] {
       flex: 1; -webkit-appearance: none; height: 4px;
@@ -296,15 +359,10 @@
       font-size: 13px; font-weight: 600; color: var(--accent);
     }
 
-    /* Color row */
     .color-row { display: flex; align-items: center; gap: 10px; }
     .color-hex { flex: 1; font-family: monospace; }
 
-    /* Watermark mode toggle */
-    .wm-panels > div { display: none; }
-    .wm-panels > div.active { display: contents; }
-
-    /* ── Buttons ─────────────────────────────────────────────────────────── */
+    /* ── Buttons ──────────────────────────────────────────────────────── */
     .btn-primary {
       display: flex; align-items: center; justify-content: center; gap: 8px;
       width: 100%; padding: 12px;
@@ -332,8 +390,8 @@
     }
     .btn-dl:hover { background: #16a34a; }
 
-    /* ── Result card ─────────────────────────────────────────────────────── */
-    .result-card { display: none; }
+    /* ── Result card ──────────────────────────────────────────────────── */
+    .result-card { display: none; animation: fadeUp .25s ease; }
     .result-card.show-ok,
     .result-card.show-err { display: block; }
 
@@ -353,7 +411,11 @@
     .result-msg { font-size: 13px; color: var(--muted); white-space: pre-wrap; margin-bottom: 12px; }
     .result-card.show-err .result-msg { margin-bottom: 0; }
 
-    /* ── Spinner ─────────────────────────────────────────────────────────── */
+    /* ── Result preview strip ────────────────────────────────────────── */
+    .result-preview { margin-top: 12px; }
+    .result-preview .preview-strip { padding-top: 8px; }
+
+    /* ── Spinner ──────────────────────────────────────────────────────── */
     .spinner {
       width: 16px; height: 16px;
       border: 2px solid rgba(255,255,255,.4);
@@ -363,9 +425,44 @@
       animation: spin .7s linear infinite;
       flex-shrink: 0;
     }
+    .spinner-sm {
+      width: 14px; height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      display: inline-block;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Toast ───────────────────────────────────────────────────────────── */
+    /* ── Progress bar ────────────────────────────────────────────────── */
+    .progress-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 12px;
+      display: none;
+    }
+    .progress-bar.active { display: block; }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      width: 0%;
+      transition: width .2s ease;
+    }
+    .progress-bar.indeterminate .progress-fill {
+      width: 30%;
+      animation: progress-slide 1.2s ease infinite;
+    }
+    @keyframes progress-slide {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
+    }
+
+    /* ── Toast ────────────────────────────────────────────────────────── */
     #toasts {
       position: fixed; bottom: 24px; right: 24px;
       display: flex; flex-direction: column; gap: 8px; z-index: 9999;
@@ -382,7 +479,6 @@
     .toast.err { background: #1a1d2e; color: #fca5a5; }
     @keyframes slide-in { from { transform: translateX(40px); opacity: 0; } }
 
-    /* ── Misc ────────────────────────────────────────────────────────────── */
     .divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
   </style>
 </head>
@@ -391,7 +487,7 @@
 <!-- ═══════════════════════════════════════════════════════════ SIDEBAR ═══ -->
 <aside id="sidebar">
   <div class="brand">
-    <div class="brand-logo">⬡</div>
+    <div class="brand-logo">&#x2B21;</div>
     <div>
       <div class="brand-name">pdftool</div>
       <div class="brand-sub">Local PDF Toolkit</div>
@@ -399,40 +495,40 @@
   </div>
   <nav class="nav-list">
     <button class="nav-item active" data-tool="merge">
-      <span class="nav-icon">🔗</span> Merge
+      <span class="nav-icon">&#x1F517;</span> Merge
     </button>
     <button class="nav-item" data-tool="split">
-      <span class="nav-icon">✂️</span> Split
+      <span class="nav-icon">&#x2702;&#xFE0F;</span> Split
     </button>
     <button class="nav-item" data-tool="rotate">
-      <span class="nav-icon">🔄</span> Rotate
+      <span class="nav-icon">&#x1F504;</span> Rotate
     </button>
     <button class="nav-item" data-tool="pagenumbers">
-      <span class="nav-icon">#️⃣</span> Page Numbers
+      <span class="nav-icon">#&#xFE0F;&#x20E3;</span> Page Numbers
     </button>
     <button class="nav-item" data-tool="reorder">
-      <span class="nav-icon">🔀</span> Reorder
+      <span class="nav-icon">&#x1F500;</span> Reorder
     </button>
     <button class="nav-item" data-tool="compress">
-      <span class="nav-icon">🗜️</span> Compress
+      <span class="nav-icon">&#x1F5DC;&#xFE0F;</span> Compress
     </button>
     <button class="nav-item" data-tool="watermark">
-      <span class="nav-icon">💧</span> Watermark
+      <span class="nav-icon">&#x1F4A7;</span> Watermark
     </button>
     <button class="nav-item" data-tool="toimage">
-      <span class="nav-icon">🖼️</span> To Image
+      <span class="nav-icon">&#x1F5BC;&#xFE0F;</span> To Image
     </button>
     <button class="nav-item" data-tool="topdf">
-      <span class="nav-icon">📄</span> To PDF
+      <span class="nav-icon">&#x1F4C4;</span> To PDF
     </button>
     <button class="nav-item" data-tool="protect">
-      <span class="nav-icon">🔒</span> Protect
+      <span class="nav-icon">&#x1F512;</span> Protect
     </button>
     <button class="nav-item" data-tool="unlock">
-      <span class="nav-icon">🔓</span> Unlock
+      <span class="nav-icon">&#x1F513;</span> Unlock
     </button>
     <button class="nav-item" data-tool="extract">
-      <span class="nav-icon">📝</span> Extract Text
+      <span class="nav-icon">&#x1F4DD;</span> Extract Text
     </button>
   </nav>
 </aside>
@@ -443,7 +539,7 @@
   <!-- ── MERGE ──────────────────────────────────────────────────────────── -->
   <section class="tool-section active" id="section-merge">
     <div class="tool-header">
-      <div class="tool-emoji">🔗</div>
+      <div class="tool-emoji">&#x1F517;</div>
       <div>
         <h1 class="tool-title">Merge PDFs</h1>
         <p class="tool-desc">Concatenate multiple PDF files into one, in the order you choose.</p>
@@ -454,15 +550,16 @@
       <div class="card-title">Input Files</div>
       <div class="drop-zone compact" id="dz-merge">
         <input type="file" id="fi-merge" accept=".pdf" multiple>
-        <span class="drop-icon">📎</span>
+        <span class="drop-icon">&#x1F4CE;</span>
         <div class="drop-main">Drop PDF files here or click to browse</div>
-        <div class="drop-hint">Add two or more PDFs — reorder with the arrows below</div>
+        <div class="drop-hint">Add two or more PDFs &mdash; reorder with the arrows below</div>
       </div>
       <div class="file-list" id="fl-merge"></div>
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-merge">⚡ Merge PDFs</button>
+      <button class="btn-primary" id="btn-merge">Merge PDFs</button>
+      <div class="progress-bar" id="prog-merge"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-merge"><div class="result-inner">
       <span class="result-icon"></span>
@@ -477,7 +574,7 @@
   <!-- ── SPLIT ──────────────────────────────────────────────────────────── -->
   <section class="tool-section" id="section-split">
     <div class="tool-header">
-      <div class="tool-emoji">✂️</div>
+      <div class="tool-emoji">&#x2702;&#xFE0F;</div>
       <div>
         <h1 class="tool-title">Split PDF</h1>
         <p class="tool-desc">Extract specific pages from a PDF into a new file.</p>
@@ -488,10 +585,11 @@
       <div class="card-title">Input File</div>
       <div class="drop-zone" id="dz-split">
         <input type="file" id="fi-split" accept=".pdf">
-        <span class="drop-icon">📄</span>
+        <span class="drop-icon">&#x1F4C4;</span>
         <div class="drop-main">Drop a PDF here or click to browse</div>
+        <div class="drop-hint">Select a PDF to see a preview of its pages</div>
       </div>
-      <div id="fb-split"></div>
+      <div id="preview-split"></div>
     </div>
 
     <div class="card">
@@ -504,7 +602,8 @@
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-split">⚡ Extract Pages</button>
+      <button class="btn-primary" id="btn-split">Extract Pages</button>
+      <div class="progress-bar" id="prog-split"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-split"><div class="result-inner">
       <span class="result-icon"></span>
@@ -519,10 +618,10 @@
   <!-- ── ROTATE ─────────────────────────────────────────────────────────── -->
   <section class="tool-section" id="section-rotate">
     <div class="tool-header">
-      <div class="tool-emoji">🔄</div>
+      <div class="tool-emoji">&#x1F504;</div>
       <div>
         <h1 class="tool-title">Rotate Pages</h1>
-        <p class="tool-desc">Rotate all pages or a specific selection by 90°, 180°, or 270°.</p>
+        <p class="tool-desc">Rotate all pages or a specific selection by 90, 180, or 270 degrees.</p>
       </div>
     </div>
 
@@ -530,10 +629,11 @@
       <div class="card-title">Input File</div>
       <div class="drop-zone" id="dz-rotate">
         <input type="file" id="fi-rotate" accept=".pdf">
-        <span class="drop-icon">📄</span>
+        <span class="drop-icon">&#x1F4C4;</span>
         <div class="drop-main">Drop a PDF here or click to browse</div>
+        <div class="drop-hint">Select a PDF to see a preview of its pages</div>
       </div>
-      <div id="fb-rotate"></div>
+      <div id="preview-rotate"></div>
     </div>
 
     <div class="card">
@@ -542,9 +642,9 @@
         <div class="form-group">
           <label>Rotation angle</label>
           <div class="seg" id="rotate-deg-seg">
-            <button class="seg-btn active" data-val="90">↻ 90°</button>
-            <button class="seg-btn" data-val="180">↻ 180°</button>
-            <button class="seg-btn" data-val="270">↻ 270°</button>
+            <button class="seg-btn active" data-val="90">&#x21BB; 90&deg;</button>
+            <button class="seg-btn" data-val="180">&#x21BB; 180&deg;</button>
+            <button class="seg-btn" data-val="270">&#x21BB; 270&deg;</button>
           </div>
         </div>
         <div class="form-group">
@@ -555,7 +655,8 @@
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-rotate">⚡ Rotate</button>
+      <button class="btn-primary" id="btn-rotate">Rotate</button>
+      <div class="progress-bar" id="prog-rotate"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-rotate"><div class="result-inner">
       <span class="result-icon"></span>
@@ -570,7 +671,7 @@
   <!-- ── PAGE NUMBERS ───────────────────────────────────────────────────── -->
   <section class="tool-section" id="section-pagenumbers">
     <div class="tool-header">
-      <div class="tool-emoji">#️⃣</div>
+      <div class="tool-emoji">#&#xFE0F;&#x20E3;</div>
       <div>
         <h1 class="tool-title">Page Numbers</h1>
         <p class="tool-desc">Stamp page numbers onto each page with custom position and format.</p>
@@ -581,10 +682,11 @@
       <div class="card-title">Input File</div>
       <div class="drop-zone" id="dz-pagenumbers">
         <input type="file" id="fi-pagenumbers" accept=".pdf">
-        <span class="drop-icon">📄</span>
+        <span class="drop-icon">&#x1F4C4;</span>
         <div class="drop-main">Drop a PDF here or click to browse</div>
+        <div class="drop-hint">Select a PDF to see a preview of its pages</div>
       </div>
-      <div id="fb-pagenumbers"></div>
+      <div id="preview-pagenumbers"></div>
     </div>
 
     <div class="card">
@@ -593,12 +695,12 @@
         <div class="form-group full">
           <label>Position</label>
           <div class="pos-grid" id="pn-pos-grid">
-            <button class="pos-btn" data-pos="top-left" title="Top Left">↖</button>
-            <button class="pos-btn" data-pos="top-center" title="Top Center">↑</button>
-            <button class="pos-btn" data-pos="top-right" title="Top Right">↗</button>
-            <button class="pos-btn" data-pos="bottom-left" title="Bottom Left">↙</button>
-            <button class="pos-btn active" data-pos="bottom-center" title="Bottom Center">↓</button>
-            <button class="pos-btn" data-pos="bottom-right" title="Bottom Right">↘</button>
+            <button class="pos-btn" data-pos="top-left" title="Top Left">&#x2196;</button>
+            <button class="pos-btn" data-pos="top-center" title="Top Center">&#x2191;</button>
+            <button class="pos-btn" data-pos="top-right" title="Top Right">&#x2197;</button>
+            <button class="pos-btn" data-pos="bottom-left" title="Bottom Left">&#x2199;</button>
+            <button class="pos-btn active" data-pos="bottom-center" title="Bottom Center">&#x2193;</button>
+            <button class="pos-btn" data-pos="bottom-right" title="Bottom Right">&#x2198;</button>
           </div>
         </div>
         <div class="form-group">
@@ -626,7 +728,8 @@
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-pagenumbers">⚡ Add Page Numbers</button>
+      <button class="btn-primary" id="btn-pagenumbers">Add Page Numbers</button>
+      <div class="progress-bar" id="prog-pagenumbers"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-pagenumbers"><div class="result-inner">
       <span class="result-icon"></span>
@@ -641,7 +744,7 @@
   <!-- ── REORDER ────────────────────────────────────────────────────────── -->
   <section class="tool-section" id="section-reorder">
     <div class="tool-header">
-      <div class="tool-emoji">🔀</div>
+      <div class="tool-emoji">&#x1F500;</div>
       <div>
         <h1 class="tool-title">Reorder Pages</h1>
         <p class="tool-desc">Rearrange pages by specifying the desired page sequence.</p>
@@ -652,10 +755,11 @@
       <div class="card-title">Input File</div>
       <div class="drop-zone" id="dz-reorder">
         <input type="file" id="fi-reorder" accept=".pdf">
-        <span class="drop-icon">📄</span>
+        <span class="drop-icon">&#x1F4C4;</span>
         <div class="drop-main">Drop a PDF here or click to browse</div>
+        <div class="drop-hint">Select a PDF to see a preview of its pages</div>
       </div>
-      <div id="fb-reorder"></div>
+      <div id="preview-reorder"></div>
     </div>
 
     <div class="card">
@@ -663,12 +767,13 @@
       <div class="form-group">
         <label for="reorder-pages">New page order <span style="color:var(--error)">*</span></label>
         <input type="text" id="reorder-pages" placeholder="e.g. 3,1,2,5,4">
-        <span class="hint">Comma-separated 1-indexed page numbers in the desired order. You may list a subset to drop pages.</span>
+        <span class="hint">Comma-separated 1-indexed page numbers in the desired order.</span>
       </div>
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-reorder">⚡ Reorder Pages</button>
+      <button class="btn-primary" id="btn-reorder">Reorder Pages</button>
+      <div class="progress-bar" id="prog-reorder"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-reorder"><div class="result-inner">
       <span class="result-icon"></span>
@@ -683,10 +788,10 @@
   <!-- ── COMPRESS ───────────────────────────────────────────────────────── -->
   <section class="tool-section" id="section-compress">
     <div class="tool-header">
-      <div class="tool-emoji">🗜️</div>
+      <div class="tool-emoji">&#x1F5DC;&#xFE0F;</div>
       <div>
         <h1 class="tool-title">Compress PDF</h1>
-        <p class="tool-desc">Reduce file size by resampling images and garbage-collecting unused data.</p>
+        <p class="tool-desc">Reduce file size by resampling images and removing unused data.</p>
       </div>
     </div>
 
@@ -694,10 +799,11 @@
       <div class="card-title">Input File</div>
       <div class="drop-zone" id="dz-compress">
         <input type="file" id="fi-compress" accept=".pdf">
-        <span class="drop-icon">📄</span>
+        <span class="drop-icon">&#x1F4C4;</span>
         <div class="drop-main">Drop a PDF here or click to browse</div>
+        <div class="drop-hint">Select a PDF to see a preview of its pages</div>
       </div>
-      <div id="fb-compress"></div>
+      <div id="preview-compress"></div>
     </div>
 
     <div class="card">
@@ -714,7 +820,8 @@
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-compress">⚡ Compress</button>
+      <button class="btn-primary" id="btn-compress">Compress</button>
+      <div class="progress-bar" id="prog-compress"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-compress"><div class="result-inner">
       <span class="result-icon"></span>
@@ -729,7 +836,7 @@
   <!-- ── WATERMARK ──────────────────────────────────────────────────────── -->
   <section class="tool-section" id="section-watermark">
     <div class="tool-header">
-      <div class="tool-emoji">💧</div>
+      <div class="tool-emoji">&#x1F4A7;</div>
       <div>
         <h1 class="tool-title">Watermark</h1>
         <p class="tool-desc">Overlay a semi-transparent text or image watermark on every page.</p>
@@ -740,20 +847,20 @@
       <div class="card-title">Input File</div>
       <div class="drop-zone" id="dz-watermark">
         <input type="file" id="fi-watermark" accept=".pdf">
-        <span class="drop-icon">📄</span>
+        <span class="drop-icon">&#x1F4C4;</span>
         <div class="drop-main">Drop a PDF here or click to browse</div>
+        <div class="drop-hint">Select a PDF to see a preview of its pages</div>
       </div>
-      <div id="fb-watermark"></div>
+      <div id="preview-watermark"></div>
     </div>
 
     <div class="card">
       <div class="card-title">Watermark type</div>
       <div class="seg" id="wm-mode-seg" style="margin-bottom:16px">
-        <button class="seg-btn active" data-mode="text">✏️ Text</button>
-        <button class="seg-btn" data-mode="image">🖼️ Image</button>
+        <button class="seg-btn active" data-mode="text" data-val="text">&#x270F;&#xFE0F; Text</button>
+        <button class="seg-btn" data-mode="image" data-val="image">&#x1F5BC;&#xFE0F; Image</button>
       </div>
 
-      <!-- Text panel -->
       <div id="wm-text-panel">
         <div class="form-grid">
           <div class="form-group full">
@@ -780,7 +887,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Angle: <span id="wm-ang-val">45</span>°</label>
+            <label>Angle: <span id="wm-ang-val">45</span>&deg;</label>
             <div class="range-wrap">
               <input type="range" id="wm-angle" min="0" max="360" value="45">
             </div>
@@ -788,14 +895,13 @@
         </div>
       </div>
 
-      <!-- Image panel -->
       <div id="wm-image-panel" style="display:none">
         <div class="form-grid">
           <div class="form-group full">
             <label>Watermark image</label>
             <div class="drop-zone compact" id="dz-wm-image">
               <input type="file" id="fi-wm-image" accept="image/png,image/jpeg,image/gif,image/webp">
-              <span class="drop-icon">🖼️</span>
+              <span class="drop-icon">&#x1F5BC;&#xFE0F;</span>
               <div class="drop-main">Drop an image or click to browse</div>
               <div class="drop-hint">PNG recommended for transparency support</div>
             </div>
@@ -808,7 +914,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label>Scale: <span id="wm-sc-val">0.50</span>×</label>
+            <label>Scale: <span id="wm-sc-val">0.50</span>&times;</label>
             <div class="range-wrap">
               <input type="range" id="wm-scale" min="5" max="100" value="50">
             </div>
@@ -824,7 +930,8 @@
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-watermark">⚡ Apply Watermark</button>
+      <button class="btn-primary" id="btn-watermark">Apply Watermark</button>
+      <div class="progress-bar" id="prog-watermark"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-watermark"><div class="result-inner">
       <span class="result-icon"></span>
@@ -839,7 +946,7 @@
   <!-- ── TO IMAGE ───────────────────────────────────────────────────────── -->
   <section class="tool-section" id="section-toimage">
     <div class="tool-header">
-      <div class="tool-emoji">🖼️</div>
+      <div class="tool-emoji">&#x1F5BC;&#xFE0F;</div>
       <div>
         <h1 class="tool-title">PDF to Images</h1>
         <p class="tool-desc">Rasterize each page to a PNG or JPG file. Downloaded as a ZIP.</p>
@@ -850,10 +957,11 @@
       <div class="card-title">Input File</div>
       <div class="drop-zone" id="dz-toimage">
         <input type="file" id="fi-toimage" accept=".pdf">
-        <span class="drop-icon">📄</span>
+        <span class="drop-icon">&#x1F4C4;</span>
         <div class="drop-main">Drop a PDF here or click to browse</div>
+        <div class="drop-hint">Select a PDF to see a preview of its pages</div>
       </div>
-      <div id="fb-toimage"></div>
+      <div id="preview-toimage"></div>
     </div>
 
     <div class="card">
@@ -869,11 +977,11 @@
         <div class="form-group">
           <label for="img-dpi">Resolution (DPI)</label>
           <select id="img-dpi">
-            <option value="72">72 dpi — screen</option>
+            <option value="72">72 dpi &mdash; screen</option>
             <option value="96">96 dpi</option>
-            <option value="150" selected>150 dpi — default</option>
-            <option value="300">300 dpi — print</option>
-            <option value="600">600 dpi — high quality</option>
+            <option value="150" selected>150 dpi &mdash; default</option>
+            <option value="300">300 dpi &mdash; print</option>
+            <option value="600">600 dpi &mdash; high quality</option>
           </select>
         </div>
         <div class="form-group">
@@ -884,7 +992,8 @@
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-toimage">⚡ Convert to Images</button>
+      <button class="btn-primary" id="btn-toimage">Convert to Images</button>
+      <div class="progress-bar" id="prog-toimage"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-toimage"><div class="result-inner">
       <span class="result-icon"></span>
@@ -899,10 +1008,10 @@
   <!-- ── TO PDF ─────────────────────────────────────────────────────────── -->
   <section class="tool-section" id="section-topdf">
     <div class="tool-header">
-      <div class="tool-emoji">📄</div>
+      <div class="tool-emoji">&#x1F4C4;</div>
       <div>
         <h1 class="tool-title">Images to PDF</h1>
-        <p class="tool-desc">Combine images into a PDF — one image per page, fitted and centered.</p>
+        <p class="tool-desc">Combine images into a PDF &mdash; one image per page, fitted and centered.</p>
       </div>
     </div>
 
@@ -910,9 +1019,9 @@
       <div class="card-title">Input Images</div>
       <div class="drop-zone compact" id="dz-topdf">
         <input type="file" id="fi-topdf" accept="image/*" multiple>
-        <span class="drop-icon">🖼️</span>
+        <span class="drop-icon">&#x1F5BC;&#xFE0F;</span>
         <div class="drop-main">Drop images here or click to browse</div>
-        <div class="drop-hint">JPG, PNG, GIF, WEBP — reorder with the arrows below</div>
+        <div class="drop-hint">JPG, PNG, GIF, WEBP &mdash; reorder with the arrows below</div>
       </div>
       <div class="file-list" id="fl-topdf"></div>
     </div>
@@ -935,7 +1044,8 @@
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-topdf">⚡ Create PDF</button>
+      <button class="btn-primary" id="btn-topdf">Create PDF</button>
+      <div class="progress-bar" id="prog-topdf"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-topdf"><div class="result-inner">
       <span class="result-icon"></span>
@@ -950,7 +1060,7 @@
   <!-- ── PROTECT ────────────────────────────────────────────────────────── -->
   <section class="tool-section" id="section-protect">
     <div class="tool-header">
-      <div class="tool-emoji">🔒</div>
+      <div class="tool-emoji">&#x1F512;</div>
       <div>
         <h1 class="tool-title">Protect PDF</h1>
         <p class="tool-desc">Encrypt a PDF with a password to restrict opening or editing.</p>
@@ -961,10 +1071,11 @@
       <div class="card-title">Input File</div>
       <div class="drop-zone" id="dz-protect">
         <input type="file" id="fi-protect" accept=".pdf">
-        <span class="drop-icon">📄</span>
+        <span class="drop-icon">&#x1F4C4;</span>
         <div class="drop-main">Drop a PDF here or click to browse</div>
+        <div class="drop-hint">Select a PDF to see a preview of its pages</div>
       </div>
-      <div id="fb-protect"></div>
+      <div id="preview-protect"></div>
     </div>
 
     <div class="card">
@@ -994,7 +1105,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="protect-perms">Permissions</label>
+          <label>Permissions</label>
           <div style="display:flex;flex-direction:column;gap:6px;margin-top:2px">
             <label style="font-weight:400;display:flex;align-items:center;gap:6px">
               <input type="checkbox" id="perm-print" checked> Allow printing
@@ -1014,7 +1125,8 @@
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-protect">🔒 Protect PDF</button>
+      <button class="btn-primary" id="btn-protect">Protect PDF</button>
+      <div class="progress-bar" id="prog-protect"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-protect"><div class="result-inner">
       <span class="result-icon"></span>
@@ -1029,7 +1141,7 @@
   <!-- ── UNLOCK ─────────────────────────────────────────────────────────── -->
   <section class="tool-section" id="section-unlock">
     <div class="tool-header">
-      <div class="tool-emoji">🔓</div>
+      <div class="tool-emoji">&#x1F513;</div>
       <div>
         <h1 class="tool-title">Unlock PDF</h1>
         <p class="tool-desc">Remove password protection from an encrypted PDF.</p>
@@ -1040,10 +1152,10 @@
       <div class="card-title">Input File</div>
       <div class="drop-zone" id="dz-unlock">
         <input type="file" id="fi-unlock" accept=".pdf">
-        <span class="drop-icon">📄</span>
+        <span class="drop-icon">&#x1F4C4;</span>
         <div class="drop-main">Drop an encrypted PDF here or click to browse</div>
       </div>
-      <div id="fb-unlock"></div>
+      <div id="preview-unlock"></div>
     </div>
 
     <div class="card">
@@ -1055,7 +1167,8 @@
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-unlock">🔓 Unlock PDF</button>
+      <button class="btn-primary" id="btn-unlock">Unlock PDF</button>
+      <div class="progress-bar" id="prog-unlock"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-unlock"><div class="result-inner">
       <span class="result-icon"></span>
@@ -1070,7 +1183,7 @@
   <!-- ── EXTRACT TEXT ───────────────────────────────────────────────────── -->
   <section class="tool-section" id="section-extract">
     <div class="tool-header">
-      <div class="tool-emoji">📝</div>
+      <div class="tool-emoji">&#x1F4DD;</div>
       <div>
         <h1 class="tool-title">Extract Text</h1>
         <p class="tool-desc">Pull all text content from a PDF and download as a text file.</p>
@@ -1081,10 +1194,11 @@
       <div class="card-title">Input File</div>
       <div class="drop-zone" id="dz-extract">
         <input type="file" id="fi-extract" accept=".pdf">
-        <span class="drop-icon">📄</span>
+        <span class="drop-icon">&#x1F4C4;</span>
         <div class="drop-main">Drop a PDF here or click to browse</div>
+        <div class="drop-hint">Select a PDF to see a preview of its pages</div>
       </div>
-      <div id="fb-extract"></div>
+      <div id="preview-extract"></div>
     </div>
 
     <div class="card">
@@ -1096,7 +1210,8 @@
     </div>
 
     <div class="card">
-      <button class="btn-primary" id="btn-extract">📝 Extract Text</button>
+      <button class="btn-primary" id="btn-extract">Extract Text</button>
+      <div class="progress-bar" id="prog-extract"><div class="progress-fill"></div></div>
     </div>
     <div class="result-card" id="res-extract"><div class="result-inner">
       <span class="result-icon"></span>
@@ -1108,7 +1223,7 @@
     </div></div>
   </section>
 
-</main><!-- /#main -->
+</main>
 
 <div id="toasts"></div>
 
@@ -1157,60 +1272,125 @@ function initSeg(segId) {
   });
 }
 
-// Initialise all segmented controls
 ['rotate-deg-seg','compress-q-seg','img-fmt-seg','topdf-size-seg','wm-mode-seg','protect-enc-seg'].forEach(initSeg);
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Single-file drop zones
+   PDF Preview
 ══════════════════════════════════════════════════════════════════════════ */
-// currentFiles maps tool → File object
+async function fetchPreview(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('max_pages', '20');
+  try {
+    const res = await fetch('api/preview', { method: 'POST', body: fd });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+function renderPreview(container, data) {
+  if (!data || !data.pages || data.pages.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  let html = '<div class="preview-strip">';
+  for (const p of data.pages) {
+    html += `<div class="preview-thumb">
+      <img src="${p.data}" alt="Page ${p.page}">
+      <div class="preview-thumb-label">${p.page}</div>
+    </div>`;
+  }
+  if (data.total_pages > data.pages.length) {
+    html += `<div class="preview-more">+${data.total_pages - data.pages.length}<br>more</div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function showPreviewLoading(container) {
+  container.innerHTML = '<div class="preview-loading"><span class="spinner-sm"></span> Loading preview...</div>';
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Single-file drop zones with preview
+══════════════════════════════════════════════════════════════════════════ */
 const currentFiles = {};
 
-function singleDropZone(toolId) {
+function singleDropZone(toolId, opts = {}) {
   const dz = document.getElementById(`dz-${toolId}`);
   const fi = document.getElementById(`fi-${toolId}`);
-  const fb = document.getElementById(`fb-${toolId}`);
+  const previewEl = document.getElementById(`preview-${toolId}`);
+  const showPreview = opts.preview !== false && previewEl;
 
   function setFile(file) {
     if (!file) return;
     currentFiles[toolId] = file;
-    fb.innerHTML = `
+
+    // Transform the drop zone into a file badge
+    dz.classList.add('has-file');
+    dz.innerHTML = `
       <div class="file-badge">
-        <span class="file-badge-icon">📄</span>
+        <span class="file-badge-icon">&#x1F4C4;</span>
         <span class="file-badge-name">${file.name}</span>
         <span class="file-badge-size">${fmtBytes(file.size)}</span>
-        <button class="file-badge-clear" title="Remove">✕</button>
+        <span class="file-badge-pages" id="pages-${toolId}"></span>
+        <button class="file-badge-clear" title="Remove file">&#x2715;</button>
       </div>`;
-    fb.querySelector('.file-badge-clear').addEventListener('click', () => {
-      delete currentFiles[toolId];
-      fb.innerHTML = '';
-      fi.value = '';
+    dz.querySelector('.file-badge-clear').addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearFile();
     });
-    // Hide drop content, keep zone active
-    dz.querySelector('.drop-icon').style.display = 'none';
-    dz.querySelector('.drop-main').style.display = 'none';
-    if (dz.querySelector('.drop-hint')) dz.querySelector('.drop-hint').style.display = 'none';
+
+    // Fetch and show preview for PDFs
+    if (showPreview && file.name.toLowerCase().endsWith('.pdf')) {
+      showPreviewLoading(previewEl);
+      fetchPreview(file).then(data => {
+        renderPreview(previewEl, data);
+        if (data) {
+          const pagesLabel = document.getElementById(`pages-${toolId}`);
+          if (pagesLabel) pagesLabel.textContent = `${data.total_pages} page${data.total_pages !== 1 ? 's' : ''}`;
+        }
+      });
+    }
+  }
+
+  function clearFile() {
+    delete currentFiles[toolId];
+    dz.classList.remove('has-file');
+    dz.innerHTML = `
+      <input type="file" id="fi-${toolId}" accept=".pdf">
+      <span class="drop-icon">&#x1F4C4;</span>
+      <div class="drop-main">Drop a PDF here or click to browse</div>
+      <div class="drop-hint">Select a PDF to see a preview of its pages</div>`;
+    if (previewEl) previewEl.innerHTML = '';
+    // Re-bind the new file input
+    const newFi = document.getElementById(`fi-${toolId}`);
+    newFi.addEventListener('change', () => { if (newFi.files[0]) setFile(newFi.files[0]); });
   }
 
   fi.addEventListener('change', () => { if (fi.files[0]) setFile(fi.files[0]); });
 
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragover', e => { e.preventDefault(); if (!dz.classList.contains('has-file')) dz.classList.add('over'); });
   dz.addEventListener('dragleave', () => dz.classList.remove('over'));
   dz.addEventListener('drop', e => {
     e.preventDefault();
     dz.classList.remove('over');
     const file = e.dataTransfer.files[0];
-    if (file) { fi.value = ''; setFile(file); }
+    if (file) setFile(file);
   });
 }
 
-['split','rotate','pagenumbers','reorder','compress','watermark','toimage','protect','unlock','extract'].forEach(singleDropZone);
+['split','rotate','pagenumbers','reorder','compress','watermark','toimage','protect','unlock','extract'].forEach(id => {
+  singleDropZone(id);
+});
 
 /* ══════════════════════════════════════════════════════════════════════════
    Multi-file list manager (merge & topdf)
 ══════════════════════════════════════════════════════════════════════════ */
 class FileListMgr {
-  constructor(dzId, fiId, listId, accept) {
+  constructor(dzId, fiId, listId) {
     this.files = [];
     this.dz = document.getElementById(dzId);
     this.fi = document.getElementById(fiId);
@@ -1241,9 +1421,9 @@ class FileListMgr {
         <span class="file-name">${f.name}</span>
         <span class="file-size">${fmtBytes(f.size)}</span>
         <div class="file-btns">
-          <button class="file-btn up" title="Move up">↑</button>
-          <button class="file-btn dn" title="Move down">↓</button>
-          <button class="file-btn del" title="Remove">✕</button>
+          <button class="file-btn up" title="Move up">&#x2191;</button>
+          <button class="file-btn dn" title="Move down">&#x2193;</button>
+          <button class="file-btn del" title="Remove">&#x2715;</button>
         </div>
       </div>`).join('');
 
@@ -1266,17 +1446,14 @@ class FileListMgr {
   getFiles() { return this.files; }
 }
 
-const flMerge = new FileListMgr('dz-merge', 'fi-merge', 'fl-merge', '.pdf');
-const flTopdf = new FileListMgr('dz-topdf', 'fi-topdf', 'fl-topdf', 'image/*');
+const flMerge = new FileListMgr('dz-merge', 'fi-merge', 'fl-merge');
+const flTopdf = new FileListMgr('dz-topdf', 'fi-topdf', 'fl-topdf');
 
 /* ══════════════════════════════════════════════════════════════════════════
    Watermark image sub-dropzone
 ══════════════════════════════════════════════════════════════════════════ */
 let wmImageFile = null;
 
-singleDropZone('wm-image'); // reuse helper for sub-zone
-
-// Override: wm-image stores to wmImageFile not currentFiles
 const wmDz = document.getElementById('dz-wm-image');
 const wmFi = document.getElementById('fi-wm-image');
 const wmFb = document.getElementById('fb-wm-image');
@@ -1284,11 +1461,11 @@ const wmFb = document.getElementById('fb-wm-image');
 function setWmImage(file) {
   wmImageFile = file;
   wmFb.innerHTML = `
-    <div class="file-badge" style="margin-top:8px">
-      <span class="file-badge-icon">🖼️</span>
+    <div class="file-badge" style="margin-top:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+      <span class="file-badge-icon">&#x1F5BC;&#xFE0F;</span>
       <span class="file-badge-name">${file.name}</span>
       <span class="file-badge-size">${fmtBytes(file.size)}</span>
-      <button class="file-badge-clear" title="Remove">✕</button>
+      <button class="file-badge-clear" title="Remove">&#x2715;</button>
     </div>`;
   wmFb.querySelector('.file-badge-clear').addEventListener('click', () => {
     wmImageFile = null;
@@ -1297,6 +1474,8 @@ function setWmImage(file) {
   });
 }
 wmFi.addEventListener('change', () => { if (wmFi.files[0]) setWmImage(wmFi.files[0]); });
+wmDz.addEventListener('dragover', e => { e.preventDefault(); wmDz.classList.add('over'); });
+wmDz.addEventListener('dragleave', () => wmDz.classList.remove('over'));
 wmDz.addEventListener('drop', e => {
   e.preventDefault();
   wmDz.classList.remove('over');
@@ -1329,7 +1508,7 @@ linkRange('wm-img-opacity','wm-img-op-val', v => (v / 100).toFixed(2));
 linkRange('wm-scale',    'wm-sc-val',   v => (v / 100).toFixed(2));
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Color picker ↔ hex input sync
+   Color picker sync
 ══════════════════════════════════════════════════════════════════════════ */
 const colorPicker = document.getElementById('wm-color');
 const colorHex    = document.getElementById('wm-color-hex');
@@ -1352,17 +1531,25 @@ function selectedPosition() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Form submission + download
+   Form submission with progress
 ══════════════════════════════════════════════════════════════════════════ */
 function setLoading(tool, on) {
   const btn = document.getElementById(`btn-${tool}`);
+  const prog = document.getElementById(`prog-${tool}`);
   if (on) {
     btn._label = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner"></span> Processing…';
+    btn.innerHTML = '<span class="spinner"></span> Processing...';
     btn.disabled = true;
+    if (prog) {
+      prog.classList.add('active', 'indeterminate');
+      prog.querySelector('.progress-fill').style.width = '';
+    }
   } else {
     btn.innerHTML = btn._label;
     btn.disabled = false;
+    if (prog) {
+      prog.classList.remove('active', 'indeterminate');
+    }
   }
 }
 
@@ -1370,18 +1557,16 @@ function showResult(tool, ok, msg, filename, blob) {
   const card = document.getElementById(`res-${tool}`);
   const inner = card.querySelector('.result-inner');
   card.className = `result-card ${ok ? 'show-ok' : 'show-err'}`;
-  inner.querySelector('.result-icon').textContent = ok ? '✅' : '❌';
+  inner.querySelector('.result-icon').textContent = ok ? '\u2705' : '\u274C';
   inner.querySelector('.result-title').textContent = ok ? 'Success' : 'Error';
   inner.querySelector('.result-msg').textContent   = msg;
 
   const dlDiv = inner.querySelector('.result-dl');
   if (ok && blob) {
     const url = URL.createObjectURL(blob);
-    dlDiv.innerHTML = `<a class="btn-dl" href="${url}" download="${filename}">⬇ Download ${filename}</a>`;
-    // Auto-trigger download
+    dlDiv.innerHTML = `<a class="btn-dl" href="${url}" download="${filename}">\u2B07 Download ${filename}</a>`;
     const a = document.createElement('a');
     a.href = url; a.download = filename; a.click();
-    // Revoke after a delay
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   } else {
     dlDiv.innerHTML = '';
@@ -1396,19 +1581,59 @@ async function submit(tool, buildFd, downloadName) {
   catch (e) { toast(e.message, 'err'); return; }
 
   setLoading(tool, true);
-  try {
-    const res = await fetch(`api/${tool}`, { method: 'POST', body: fd });
-    const msgHeader = res.headers.get('X-Message');
-    const msg = msgHeader ? decodeURIComponent(msgHeader) : '';
 
-    if (res.ok) {
-      const blob = await res.blob();
-      const name = res.headers.get('Content-Disposition')?.match(/filename="(.+?)"/)?.[1] || downloadName;
-      showResult(tool, true, msg, name, blob);
-    } else {
-      const data = await res.json().catch(() => ({ error: 'Server error' }));
-      showResult(tool, false, data.error || 'Unknown error', null, null);
-    }
+  const prog = document.getElementById(`prog-${tool}`);
+
+  try {
+    // Use XMLHttpRequest for upload progress
+    const result = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `api/${tool}`);
+      xhr.responseType = 'blob';
+
+      xhr.upload.addEventListener('progress', e => {
+        if (e.lengthComputable && prog) {
+          prog.classList.remove('indeterminate');
+          const pct = Math.round((e.loaded / e.total) * 100);
+          prog.querySelector('.progress-fill').style.width = pct + '%';
+        }
+      });
+
+      xhr.upload.addEventListener('loadend', () => {
+        // Upload done, now waiting for server
+        if (prog) prog.classList.add('indeterminate');
+      });
+
+      xhr.addEventListener('load', () => {
+        const msgHeader = xhr.getResponseHeader('X-Message');
+        const msg = msgHeader ? decodeURIComponent(msgHeader) : '';
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const name = xhr.getResponseHeader('Content-Disposition')?.match(/filename="(.+?)"/)?.[1] || downloadName;
+          resolve({ ok: true, msg, name, blob: xhr.response });
+        } else {
+          // Try to read error JSON from blob
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const data = JSON.parse(reader.result);
+              resolve({ ok: false, msg: data.error || 'Unknown error' });
+            } catch {
+              resolve({ ok: false, msg: 'Server error' });
+            }
+          };
+          reader.onerror = () => resolve({ ok: false, msg: 'Server error' });
+          reader.readAsText(xhr.response);
+        }
+      });
+
+      xhr.addEventListener('error', () => reject(new Error('Network error')));
+      xhr.addEventListener('timeout', () => reject(new Error('Request timed out')));
+
+      xhr.send(fd);
+    });
+
+    showResult(tool, result.ok, result.msg, result.name, result.blob);
   } catch (e) {
     showResult(tool, false, 'Network error: ' + e.message, null, null);
   } finally {
@@ -1572,7 +1797,6 @@ document.getElementById('btn-protect').addEventListener('click', () => {
     if (userPw)  fd.append('user_password', userPw);
     if (ownerPw) fd.append('owner_password', ownerPw);
     fd.append('encryption', segValue('protect-enc-seg'));
-    // Build permissions string from checkboxes
     const perms = [];
     if (document.getElementById('perm-print').checked)    perms.push('print');
     if (document.getElementById('perm-copy').checked)     perms.push('copy');

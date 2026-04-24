@@ -11,6 +11,7 @@ Usage (activate the lovepdf venv first):
 Then open  http://localhost:5000  in your browser.
 """
 
+import base64
 import io
 import os
 import shutil
@@ -23,6 +24,7 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
 
+import fitz as _fitz  # PyMuPDF – used directly for preview
 from flask import Flask, jsonify, render_template, request, send_file
 
 # Make pdftool importable from the same directory
@@ -190,6 +192,53 @@ def _rm(*paths):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+# ── preview ──────────────────────────────────────────────────────────────────
+
+@app.route("/api/preview", methods=["POST"])
+def api_preview():
+    """Render PDF pages as low-res thumbnails and return as base64 JSON."""
+    f = request.files.get("file")
+    if not f:
+        return bad_request("No PDF file provided")
+
+    max_pages = min(int(request.form.get("max_pages", "20")), 50)
+
+    inp = save_upload(f)
+    try:
+        doc = _fitz.open(inp)
+    except Exception:
+        _rm(inp)
+        return bad_request("Cannot open this file as a PDF")
+
+    if not doc.is_pdf:
+        doc.close()
+        _rm(inp)
+        return bad_request("Not a valid PDF file")
+
+    total = len(doc)
+    pages_to_render = min(total, max_pages)
+    scale = 96 / 72.0  # 96 DPI thumbnails
+    mat = _fitz.Matrix(scale, scale)
+
+    thumbnails = []
+    for i in range(pages_to_render):
+        page = doc[i]
+        pix = page.get_pixmap(matrix=mat, alpha=False)
+        png_data = pix.tobytes("png")
+        b64 = base64.b64encode(png_data).decode("ascii")
+        thumbnails.append({
+            "page": i + 1,
+            "data": f"data:image/png;base64,{b64}",
+            "width": pix.width,
+            "height": pix.height,
+        })
+
+    doc.close()
+    _rm(inp)
+
+    return jsonify(total_pages=total, pages=thumbnails)
 
 
 # ── merge ─────────────────────────────────────────────────────────────────────
