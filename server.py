@@ -8,7 +8,7 @@ function in-process, and returns the processed file for download.
 
 Usage (activate the lovepdf venv first):
     python server.py
-Then open  http://localhost:5000  in your browser.
+Then open  http://localhost:3003  in your browser.
 """
 
 import base64
@@ -33,6 +33,12 @@ import pdftool  # noqa: E402
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB upload cap
+
+
+@app.route("/api/health", methods=["GET"])
+def api_health():
+    port = int(os.environ.get("PORT", 3003))
+    return jsonify(service="pdf", status="ok", port=port), 200
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -643,7 +649,7 @@ def api_extract():
 # ══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 3003))
     print(f"\n  pdftool web UI  →  http://localhost:{port}\n")
     app.run(host="127.0.0.1", port=port,
             debug=os.environ.get("FLASK_DEBUG", "0") == "1")

@@ -41,10 +41,22 @@ python server.py
 Then open:
 
 ```text
-http://localhost:5000
+http://127.0.0.1:3003
+```
+
+Via Nginx:
+
+```text
+http://127.0.0.1/idolovepdf/
 ```
 
 The web UI exposes the same core operations as the CLI: merge, split, rotate, page numbers, reorder, compress, watermark, PDF to images, and images to PDF.
+
+Health endpoint:
+
+```text
+GET /api/health
+```
 
 ## Commands
 
