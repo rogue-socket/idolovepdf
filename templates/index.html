@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="static/favicon.svg">
   <title>pdftool – Local PDF Toolkit</title>
   <style>
     /* ── Reset & variables ───────────────────────────────────────────────── */
@@ -1396,7 +1397,7 @@ async function submit(tool, buildFd, downloadName) {
 
   setLoading(tool, true);
   try {
-    const res = await fetch(`/api/${tool}`, { method: 'POST', body: fd });
+    const res = await fetch(`api/${tool}`, { method: 'POST', body: fd });
     const msgHeader = res.headers.get('X-Message');
     const msg = msgHeader ? decodeURIComponent(msgHeader) : '';
 
