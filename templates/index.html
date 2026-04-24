@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pdftool – Local PDF Toolkit</title>
+  <style>
+    /* ── Reset & variables ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 220px;
+      --sidebar-bg: #0f1117;
+      --sidebar-hover: #1c1f2e;
+      --sidebar-active: #1e2240;
+      --accent: #5b6af0;
+      --accent-h: #4a59e0;
+      --bg: #f4f6fb;
+      --surface: #ffffff;
+      --border: #e4e8f5;
+      --text: #1a202c;
+      --muted: #718096;
+      --success: #22c55e;
+      --success-bg: #f0fdf4;
+      --error: #ef4444;
+      --error-bg: #fef2f2;
+      --radius: 10px;
+      --shadow: 0 2px 12px rgba(0,0,0,.07);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────────────── */
+    #sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 22px 18px 18px;
+      border-bottom: 1px solid #1e2136;
+    }
+    .brand-logo {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .brand-name { color: #e2e8f0; font-weight: 700; font-size: 16px; letter-spacing: -.3px; }
+    .brand-sub  { color: #4a5568; font-size: 11px; margin-top: 1px; }
+
+    .nav-list { padding: 10px 0; flex: 1; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 18px;
+      background: none;
+      border: none;
+      color: #8892a4;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: background .15s, color .15s;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover  { background: var(--sidebar-hover); color: #c8d0e0; }
+    .nav-item.active { background: var(--sidebar-active); color: #ffffff;
+                       border-left-color: var(--accent); }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+    /* ── Main ────────────────────────────────────────────────────────────── */
+    #main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 36px 48px;
+    }
+
+    .tool-section { display: none; max-width: 720px; }
+    .tool-section.active { display: block; }
+
+    .tool-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .tool-emoji {
+      width: 52px; height: 52px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      box-shadow: var(--shadow);
+      flex-shrink: 0;
+    }
+    .tool-title { font-size: 22px; font-weight: 700; letter-spacing: -.4px; }
+    .tool-desc  { color: var(--muted); font-size: 14px; margin-top: 3px; }
+
+    /* ── Cards ───────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    /* ── Drop zone ───────────────────────────────────────────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+      user-select: none;
+    }
+    .drop-zone:hover, .drop-zone.over {
+      border-color: var(--accent);
+      background: #f0f2ff;
+    }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 36px; display: block; margin-bottom: 10px; }
+    .drop-main { font-size: 15px; font-weight: 600; color: var(--text); }
+    .drop-hint { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* ── File list (merge / topdf) ───────────────────────────────────────── */
+    .drop-zone.compact { padding: 16px 20px; }
+    .drop-zone.compact .drop-icon { font-size: 20px; margin: 0 0 4px; }
+    .drop-zone.compact .drop-main { font-size: 13px; }
+    .drop-zone.compact .drop-hint { font-size: 12px; }
+
+    .file-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .file-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+    .file-num {
+      width: 22px; height: 22px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .file-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-size { color: var(--muted); font-size: 12px; flex-shrink: 0; }
+    .file-btns { display: flex; gap: 4px; flex-shrink: 0; }
+    .file-btn {
+      width: 26px; height: 26px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, border-color .15s;
+    }
+    .file-btn:hover { background: var(--border); }
+    .file-btn.del:hover { background: var(--error-bg); border-color: var(--error); color: var(--error); }
+
+    /* ── Single file badge (after upload) ───────────────────────────────── */
+    .file-badge {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    .file-badge-icon { font-size: 18px; }
+    .file-badge-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+    .file-badge-size { color: var(--muted); font-size: 12px; flex-shrink: 0; }
+    .file-badge-clear {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 16px; padding: 0 4px;
+      line-height: 1;
+    }
+    .file-badge-clear:hover { color: var(--error); }
+
+    /* ── Form controls ───────────────────────────────────────────────────── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label { font-size: 13px; font-weight: 600; color: var(--text); }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91,106,240,.12);
+    }
+    input[type="color"] {
+      width: 40px; height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 2px;
+      background: var(--surface);
+    }
+
+    /* Segmented / pill controls */
+    .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .seg-btn {
+      flex: 1; padding: 8px 4px; border: none;
+      background: var(--surface); cursor: pointer;
+      font-size: 13px; font-weight: 500; color: var(--muted);
+      transition: background .15s, color .15s;
+      border-right: 1px solid var(--border);
+    }
+    .seg-btn:last-child { border-right: none; }
+    .seg-btn.active { background: var(--accent); color: #fff; }
+    .seg-btn:hover:not(.active) { background: var(--bg); }
+
+    /* Position grid (pagenumbers) */
+    .pos-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    }
+    .pos-btn {
+      padding: 8px 4px; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--surface);
+      cursor: pointer; font-size: 16px; text-align: center;
+      transition: background .15s, border-color .15s;
+    }
+    .pos-btn:hover { background: var(--bg); }
+    .pos-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* Range sliders */
+    .range-wrap { display: flex; align-items: center; gap: 12px; }
+    .range-wrap input[type="range"] {
+      flex: 1; -webkit-appearance: none; height: 4px;
+      background: var(--border); border-radius: 2px; outline: none;
+      border: none; padding: 0;
+    }
+    .range-wrap input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 16px; height: 16px;
+      border-radius: 50%; background: var(--accent); cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+    .range-val {
+      min-width: 44px; text-align: right;
+      font-size: 13px; font-weight: 600; color: var(--accent);
+    }
+
+    /* Color row */
+    .color-row { display: flex; align-items: center; gap: 10px; }
+    .color-hex { flex: 1; font-family: monospace; }
+
+    /* Watermark mode toggle */
+    .wm-panels > div { display: none; }
+    .wm-panels > div.active { display: contents; }
+
+    /* ── Buttons ─────────────────────────────────────────────────────────── */
+    .btn-primary {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none; border-radius: var(--radius);
+      font-size: 15px; font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
+    .btn-primary:active:not(:disabled) { transform: scale(.98); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+    .btn-dl {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px;
+      background: var(--success);
+      color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .2s;
+    }
+    .btn-dl:hover { background: #16a34a; }
+
+    /* ── Result card ─────────────────────────────────────────────────────── */
+    .result-card { display: none; }
+    .result-card.show-ok,
+    .result-card.show-err { display: block; }
+
+    .result-inner {
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .result-card.show-ok .result-inner { background: var(--success-bg); border: 1px solid #bbf7d0; }
+    .result-card.show-err .result-inner { background: var(--error-bg); border: 1px solid #fecaca; }
+
+    .result-icon { font-size: 22px; flex-shrink: 0; line-height: 1.3; }
+    .result-body { flex: 1; }
+    .result-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+    .result-card.show-ok .result-title { color: #15803d; }
+    .result-card.show-err .result-title { color: #b91c1c; }
+    .result-msg { font-size: 13px; color: var(--muted); white-space: pre-wrap; margin-bottom: 12px; }
+    .result-card.show-err .result-msg { margin-bottom: 0; }
+
+    /* ── Spinner ─────────────────────────────────────────────────────────── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      display: inline-block;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ───────────────────────────────────────────────────────────── */
+    #toasts {
+      position: fixed; bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 8px; z-index: 9999;
+    }
+    .toast {
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 13px; font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,.15);
+      animation: slide-in .25s ease;
+      max-width: 320px;
+    }
+    .toast.ok  { background: #1a1d2e; color: #a7f3d0; }
+    .toast.err { background: #1a1d2e; color: #fca5a5; }
+    @keyframes slide-in { from { transform: translateX(40px); opacity: 0; } }
+
+    /* ── Misc ────────────────────────────────────────────────────────────── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ SIDEBAR ═══ -->
+<aside id="sidebar">
+  <div class="brand">
+    <div class="brand-logo">⬡</div>
+    <div>
+      <div class="brand-name">pdftool</div>
+      <div class="brand-sub">Local PDF Toolkit</div>
+    </div>
+  </div>
+  <nav class="nav-list">
+    <button class="nav-item active" data-tool="merge">
+      <span class="nav-icon">🔗</span> Merge
+    </button>
+    <button class="nav-item" data-tool="split">
+      <span class="nav-icon">✂️</span> Split
+    </button>
+    <button class="nav-item" data-tool="rotate">
+      <span class="nav-icon">🔄</span> Rotate
+    </button>
+    <button class="nav-item" data-tool="pagenumbers">
+      <span class="nav-icon">#️⃣</span> Page Numbers
+    </button>
+    <button class="nav-item" data-tool="reorder">
+      <span class="nav-icon">🔀</span> Reorder
+    </button>
+    <button class="nav-item" data-tool="compress">
+      <span class="nav-icon">🗜️</span> Compress
+    </button>
+    <button class="nav-item" data-tool="watermark">
+      <span class="nav-icon">💧</span> Watermark
+    </button>
+    <button class="nav-item" data-tool="toimage">
+      <span class="nav-icon">🖼️</span> To Image
+    </button>
+    <button class="nav-item" data-tool="topdf">
+      <span class="nav-icon">📄</span> To PDF
+    </button>
+  </nav>
+</aside>
+
+<!-- ════════════════════════════════════════════════════════════ MAIN ══════ -->
+<main id="main">
+
+  <!-- ── MERGE ──────────────────────────────────────────────────────────── -->
+  <section class="tool-section active" id="section-merge">
+    <div class="tool-header">
+      <div class="tool-emoji">🔗</div>
+      <div>
+        <h1 class="tool-title">Merge PDFs</h1>
+        <p class="tool-desc">Concatenate multiple PDF files into one, in the order you choose.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input Files</div>
+      <div class="drop-zone compact" id="dz-merge">
+        <input type="file" id="fi-merge" accept=".pdf" multiple>
+        <span class="drop-icon">📎</span>
+        <div class="drop-main">Drop PDF files here or click to browse</div>
+        <div class="drop-hint">Add two or more PDFs — reorder with the arrows below</div>
+      </div>
+      <div class="file-list" id="fl-merge"></div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-merge">⚡ Merge PDFs</button>
+    </div>
+    <div class="result-card" id="res-merge"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ── SPLIT ──────────────────────────────────────────────────────────── -->
+  <section class="tool-section" id="section-split">
+    <div class="tool-header">
+      <div class="tool-emoji">✂️</div>
+      <div>
+        <h1 class="tool-title">Split PDF</h1>
+        <p class="tool-desc">Extract specific pages from a PDF into a new file.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input File</div>
+      <div class="drop-zone" id="dz-split">
+        <input type="file" id="fi-split" accept=".pdf">
+        <span class="drop-icon">📄</span>
+        <div class="drop-main">Drop a PDF here or click to browse</div>
+      </div>
+      <div id="fb-split"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Options</div>
+      <div class="form-group">
+        <label for="split-pages">Page ranges <span style="color:var(--error)">*</span></label>
+        <input type="text" id="split-pages" placeholder="e.g. 1-3,5,8-10" maxlength="200">
+        <span class="hint">Comma-separated ranges and individual pages (1-indexed).</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-split">⚡ Extract Pages</button>
+    </div>
+    <div class="result-card" id="res-split"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ── ROTATE ─────────────────────────────────────────────────────────── -->
+  <section class="tool-section" id="section-rotate">
+    <div class="tool-header">
+      <div class="tool-emoji">🔄</div>
+      <div>
+        <h1 class="tool-title">Rotate Pages</h1>
+        <p class="tool-desc">Rotate all pages or a specific selection by 90°, 180°, or 270°.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input File</div>
+      <div class="drop-zone" id="dz-rotate">
+        <input type="file" id="fi-rotate" accept=".pdf">
+        <span class="drop-icon">📄</span>
+        <div class="drop-main">Drop a PDF here or click to browse</div>
+      </div>
+      <div id="fb-rotate"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Options</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Rotation angle</label>
+          <div class="seg" id="rotate-deg-seg">
+            <button class="seg-btn active" data-val="90">↻ 90°</button>
+            <button class="seg-btn" data-val="180">↻ 180°</button>
+            <button class="seg-btn" data-val="270">↻ 270°</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="rotate-pages">Pages (optional)</label>
+          <input type="text" id="rotate-pages" placeholder="e.g. 1,3,5-7 (blank = all)">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-rotate">⚡ Rotate</button>
+    </div>
+    <div class="result-card" id="res-rotate"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ── PAGE NUMBERS ───────────────────────────────────────────────────── -->
+  <section class="tool-section" id="section-pagenumbers">
+    <div class="tool-header">
+      <div class="tool-emoji">#️⃣</div>
+      <div>
+        <h1 class="tool-title">Page Numbers</h1>
+        <p class="tool-desc">Stamp page numbers onto each page with custom position and format.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input File</div>
+      <div class="drop-zone" id="dz-pagenumbers">
+        <input type="file" id="fi-pagenumbers" accept=".pdf">
+        <span class="drop-icon">📄</span>
+        <div class="drop-main">Drop a PDF here or click to browse</div>
+      </div>
+      <div id="fb-pagenumbers"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Options</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Position</label>
+          <div class="pos-grid" id="pn-pos-grid">
+            <button class="pos-btn" data-pos="top-left" title="Top Left">↖</button>
+            <button class="pos-btn" data-pos="top-center" title="Top Center">↑</button>
+            <button class="pos-btn" data-pos="top-right" title="Top Right">↗</button>
+            <button class="pos-btn" data-pos="bottom-left" title="Bottom Left">↙</button>
+            <button class="pos-btn active" data-pos="bottom-center" title="Bottom Center">↓</button>
+            <button class="pos-btn" data-pos="bottom-right" title="Bottom Right">↘</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="pn-format">Format</label>
+          <input type="text" id="pn-format" value="{n}" placeholder="{n} or Page {n} of {total}">
+          <span class="hint">{n} = page number, {total} = page count</span>
+        </div>
+        <div class="form-group">
+          <label for="pn-start">Starting number</label>
+          <input type="number" id="pn-start" value="1" min="0">
+        </div>
+        <div class="form-group">
+          <label for="pn-fontsize">Font size (pt)</label>
+          <input type="number" id="pn-fontsize" value="12" min="4" max="72">
+        </div>
+        <div class="form-group">
+          <label for="pn-margin">Margin (pt)</label>
+          <input type="number" id="pn-margin" value="36" min="0" max="200">
+        </div>
+        <div class="form-group">
+          <label for="pn-skip">Skip pages (optional)</label>
+          <input type="text" id="pn-skip" placeholder="e.g. 1 to skip cover">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-pagenumbers">⚡ Add Page Numbers</button>
+    </div>
+    <div class="result-card" id="res-pagenumbers"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ── REORDER ────────────────────────────────────────────────────────── -->
+  <section class="tool-section" id="section-reorder">
+    <div class="tool-header">
+      <div class="tool-emoji">🔀</div>
+      <div>
+        <h1 class="tool-title">Reorder Pages</h1>
+        <p class="tool-desc">Rearrange pages by specifying the desired page sequence.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input File</div>
+      <div class="drop-zone" id="dz-reorder">
+        <input type="file" id="fi-reorder" accept=".pdf">
+        <span class="drop-icon">📄</span>
+        <div class="drop-main">Drop a PDF here or click to browse</div>
+      </div>
+      <div id="fb-reorder"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Options</div>
+      <div class="form-group">
+        <label for="reorder-pages">New page order <span style="color:var(--error)">*</span></label>
+        <input type="text" id="reorder-pages" placeholder="e.g. 3,1,2,5,4">
+        <span class="hint">Comma-separated 1-indexed page numbers in the desired order. You may list a subset to drop pages.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-reorder">⚡ Reorder Pages</button>
+    </div>
+    <div class="result-card" id="res-reorder"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ── COMPRESS ───────────────────────────────────────────────────────── -->
+  <section class="tool-section" id="section-compress">
+    <div class="tool-header">
+      <div class="tool-emoji">🗜️</div>
+      <div>
+        <h1 class="tool-title">Compress PDF</h1>
+        <p class="tool-desc">Reduce file size by resampling images and garbage-collecting unused data.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input File</div>
+      <div class="drop-zone" id="dz-compress">
+        <input type="file" id="fi-compress" accept=".pdf">
+        <span class="drop-icon">📄</span>
+        <div class="drop-main">Drop a PDF here or click to browse</div>
+      </div>
+      <div id="fb-compress"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Options</div>
+      <div class="form-group">
+        <label>Image quality</label>
+        <div class="seg" id="compress-q-seg">
+          <button class="seg-btn" data-val="low">Low <span style="color:var(--muted);font-size:11px">(JPEG 40)</span></button>
+          <button class="seg-btn active" data-val="medium">Medium <span style="color:var(--muted);font-size:11px">(JPEG 65)</span></button>
+          <button class="seg-btn" data-val="high">High <span style="color:var(--muted);font-size:11px">(JPEG 85)</span></button>
+        </div>
+        <span class="hint">Applies only to JPEG images embedded in the PDF. Metadata is always stripped.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-compress">⚡ Compress</button>
+    </div>
+    <div class="result-card" id="res-compress"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ── WATERMARK ──────────────────────────────────────────────────────── -->
+  <section class="tool-section" id="section-watermark">
+    <div class="tool-header">
+      <div class="tool-emoji">💧</div>
+      <div>
+        <h1 class="tool-title">Watermark</h1>
+        <p class="tool-desc">Overlay a semi-transparent text or image watermark on every page.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input File</div>
+      <div class="drop-zone" id="dz-watermark">
+        <input type="file" id="fi-watermark" accept=".pdf">
+        <span class="drop-icon">📄</span>
+        <div class="drop-main">Drop a PDF here or click to browse</div>
+      </div>
+      <div id="fb-watermark"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Watermark type</div>
+      <div class="seg" id="wm-mode-seg" style="margin-bottom:16px">
+        <button class="seg-btn active" data-mode="text">✏️ Text</button>
+        <button class="seg-btn" data-mode="image">🖼️ Image</button>
+      </div>
+
+      <!-- Text panel -->
+      <div id="wm-text-panel">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label for="wm-text">Watermark text <span style="color:var(--error)">*</span></label>
+            <input type="text" id="wm-text" placeholder="e.g. CONFIDENTIAL">
+          </div>
+          <div class="form-group">
+            <label>Color</label>
+            <div class="color-row">
+              <input type="color" id="wm-color" value="#FF0000">
+              <input type="text" id="wm-color-hex" class="color-hex" value="#FF0000" maxlength="7">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Font size: <span id="wm-fs-val">60</span> pt</label>
+            <div class="range-wrap">
+              <input type="range" id="wm-fontsize" min="10" max="200" value="60">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Opacity: <span id="wm-op-val">0.30</span></label>
+            <div class="range-wrap">
+              <input type="range" id="wm-opacity" min="1" max="100" value="30">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Angle: <span id="wm-ang-val">45</span>°</label>
+            <div class="range-wrap">
+              <input type="range" id="wm-angle" min="0" max="360" value="45">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image panel -->
+      <div id="wm-image-panel" style="display:none">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Watermark image</label>
+            <div class="drop-zone compact" id="dz-wm-image">
+              <input type="file" id="fi-wm-image" accept="image/png,image/jpeg,image/gif,image/webp">
+              <span class="drop-icon">🖼️</span>
+              <div class="drop-main">Drop an image or click to browse</div>
+              <div class="drop-hint">PNG recommended for transparency support</div>
+            </div>
+            <div id="fb-wm-image"></div>
+          </div>
+          <div class="form-group">
+            <label>Opacity: <span id="wm-img-op-val">0.30</span></label>
+            <div class="range-wrap">
+              <input type="range" id="wm-img-opacity" min="1" max="100" value="30">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Scale: <span id="wm-sc-val">0.50</span>×</label>
+            <div class="range-wrap">
+              <input type="range" id="wm-scale" min="5" max="100" value="50">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider" style="margin-top:16px">
+      <div class="form-group" style="margin-top:14px">
+        <label for="wm-pages">Limit to pages (optional)</label>
+        <input type="text" id="wm-pages" placeholder="e.g. 2-5 (blank = all pages)">
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-watermark">⚡ Apply Watermark</button>
+    </div>
+    <div class="result-card" id="res-watermark"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ── TO IMAGE ───────────────────────────────────────────────────────── -->
+  <section class="tool-section" id="section-toimage">
+    <div class="tool-header">
+      <div class="tool-emoji">🖼️</div>
+      <div>
+        <h1 class="tool-title">PDF to Images</h1>
+        <p class="tool-desc">Rasterize each page to a PNG or JPG file. Downloaded as a ZIP.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input File</div>
+      <div class="drop-zone" id="dz-toimage">
+        <input type="file" id="fi-toimage" accept=".pdf">
+        <span class="drop-icon">📄</span>
+        <div class="drop-main">Drop a PDF here or click to browse</div>
+      </div>
+      <div id="fb-toimage"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Options</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Format</label>
+          <div class="seg" id="img-fmt-seg">
+            <button class="seg-btn active" data-val="png">PNG</button>
+            <button class="seg-btn" data-val="jpg">JPG</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="img-dpi">Resolution (DPI)</label>
+          <select id="img-dpi">
+            <option value="72">72 dpi — screen</option>
+            <option value="96">96 dpi</option>
+            <option value="150" selected>150 dpi — default</option>
+            <option value="300">300 dpi — print</option>
+            <option value="600">600 dpi — high quality</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="img-pages">Pages (optional)</label>
+          <input type="text" id="img-pages" placeholder="e.g. 1,3,5-8 (blank = all)">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-toimage">⚡ Convert to Images</button>
+    </div>
+    <div class="result-card" id="res-toimage"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ── TO PDF ─────────────────────────────────────────────────────────── -->
+  <section class="tool-section" id="section-topdf">
+    <div class="tool-header">
+      <div class="tool-emoji">📄</div>
+      <div>
+        <h1 class="tool-title">Images to PDF</h1>
+        <p class="tool-desc">Combine images into a PDF — one image per page, fitted and centered.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input Images</div>
+      <div class="drop-zone compact" id="dz-topdf">
+        <input type="file" id="fi-topdf" accept="image/*" multiple>
+        <span class="drop-icon">🖼️</span>
+        <div class="drop-main">Drop images here or click to browse</div>
+        <div class="drop-hint">JPG, PNG, GIF, WEBP — reorder with the arrows below</div>
+      </div>
+      <div class="file-list" id="fl-topdf"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Options</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Page size</label>
+          <div class="seg" id="topdf-size-seg">
+            <button class="seg-btn active" data-val="a4">A4</button>
+            <button class="seg-btn" data-val="letter">Letter</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="topdf-margin">Margin (pt)</label>
+          <input type="number" id="topdf-margin" value="20" min="0" max="200">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-topdf">⚡ Create PDF</button>
+    </div>
+    <div class="result-card" id="res-topdf"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
+</main><!-- /#main -->
+
+<div id="toasts"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   Navigation
+══════════════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tool = btn.dataset.tool;
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tool-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`section-${tool}`).classList.add('active');
+    document.getElementById('main').scrollTop = 0;
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Utilities
+══════════════════════════════════════════════════════════════════════════ */
+function fmtBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1048576).toFixed(1) + ' MB';
+}
+
+function toast(msg, type = 'ok') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function segValue(segId) {
+  return document.querySelector(`#${segId} .seg-btn.active`)?.dataset.val;
+}
+
+function initSeg(segId) {
+  document.querySelectorAll(`#${segId} .seg-btn`).forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll(`#${segId} .seg-btn`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+}
+
+// Initialise all segmented controls
+['rotate-deg-seg','compress-q-seg','img-fmt-seg','topdf-size-seg','wm-mode-seg'].forEach(initSeg);
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Single-file drop zones
+══════════════════════════════════════════════════════════════════════════ */
+// currentFiles maps tool → File object
+const currentFiles = {};
+
+function singleDropZone(toolId) {
+  const dz = document.getElementById(`dz-${toolId}`);
+  const fi = document.getElementById(`fi-${toolId}`);
+  const fb = document.getElementById(`fb-${toolId}`);
+
+  function setFile(file) {
+    if (!file) return;
+    currentFiles[toolId] = file;
+    fb.innerHTML = `
+      <div class="file-badge">
+        <span class="file-badge-icon">📄</span>
+        <span class="file-badge-name">${file.name}</span>
+        <span class="file-badge-size">${fmtBytes(file.size)}</span>
+        <button class="file-badge-clear" title="Remove">✕</button>
+      </div>`;
+    fb.querySelector('.file-badge-clear').addEventListener('click', () => {
+      delete currentFiles[toolId];
+      fb.innerHTML = '';
+      fi.value = '';
+    });
+    // Hide drop content, keep zone active
+    dz.querySelector('.drop-icon').style.display = 'none';
+    dz.querySelector('.drop-main').style.display = 'none';
+    if (dz.querySelector('.drop-hint')) dz.querySelector('.drop-hint').style.display = 'none';
+  }
+
+  fi.addEventListener('change', () => { if (fi.files[0]) setFile(fi.files[0]); });
+
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('over');
+    const file = e.dataTransfer.files[0];
+    if (file) { fi.value = ''; setFile(file); }
+  });
+}
+
+['split','rotate','pagenumbers','reorder','compress','watermark','toimage'].forEach(singleDropZone);
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Multi-file list manager (merge & topdf)
+══════════════════════════════════════════════════════════════════════════ */
+class FileListMgr {
+  constructor(dzId, fiId, listId, accept) {
+    this.files = [];
+    this.dz = document.getElementById(dzId);
+    this.fi = document.getElementById(fiId);
+    this.list = document.getElementById(listId);
+
+    this.fi.addEventListener('change', () => {
+      this.addFiles(Array.from(this.fi.files));
+      this.fi.value = '';
+    });
+    this.dz.addEventListener('dragover', e => { e.preventDefault(); this.dz.classList.add('over'); });
+    this.dz.addEventListener('dragleave', () => this.dz.classList.remove('over'));
+    this.dz.addEventListener('drop', e => {
+      e.preventDefault();
+      this.dz.classList.remove('over');
+      this.addFiles(Array.from(e.dataTransfer.files));
+    });
+  }
+
+  addFiles(newFiles) {
+    this.files.push(...newFiles);
+    this.render();
+  }
+
+  render() {
+    this.list.innerHTML = this.files.map((f, i) => `
+      <div class="file-item" data-idx="${i}">
+        <span class="file-num">${i + 1}</span>
+        <span class="file-name">${f.name}</span>
+        <span class="file-size">${fmtBytes(f.size)}</span>
+        <div class="file-btns">
+          <button class="file-btn up" title="Move up">↑</button>
+          <button class="file-btn dn" title="Move down">↓</button>
+          <button class="file-btn del" title="Remove">✕</button>
+        </div>
+      </div>`).join('');
+
+    this.list.querySelectorAll('.file-item').forEach(el => {
+      const idx = +el.dataset.idx;
+      el.querySelector('.up').addEventListener('click', () => this.move(idx, -1));
+      el.querySelector('.dn').addEventListener('click', () => this.move(idx, +1));
+      el.querySelector('.del').addEventListener('click', () => this.remove(idx));
+    });
+  }
+
+  move(idx, delta) {
+    const to = idx + delta;
+    if (to < 0 || to >= this.files.length) return;
+    [this.files[idx], this.files[to]] = [this.files[to], this.files[idx]];
+    this.render();
+  }
+
+  remove(idx) { this.files.splice(idx, 1); this.render(); }
+  getFiles() { return this.files; }
+}
+
+const flMerge = new FileListMgr('dz-merge', 'fi-merge', 'fl-merge', '.pdf');
+const flTopdf = new FileListMgr('dz-topdf', 'fi-topdf', 'fl-topdf', 'image/*');
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Watermark image sub-dropzone
+══════════════════════════════════════════════════════════════════════════ */
+let wmImageFile = null;
+
+singleDropZone('wm-image'); // reuse helper for sub-zone
+
+// Override: wm-image stores to wmImageFile not currentFiles
+const wmDz = document.getElementById('dz-wm-image');
+const wmFi = document.getElementById('fi-wm-image');
+const wmFb = document.getElementById('fb-wm-image');
+
+function setWmImage(file) {
+  wmImageFile = file;
+  wmFb.innerHTML = `
+    <div class="file-badge" style="margin-top:8px">
+      <span class="file-badge-icon">🖼️</span>
+      <span class="file-badge-name">${file.name}</span>
+      <span class="file-badge-size">${fmtBytes(file.size)}</span>
+      <button class="file-badge-clear" title="Remove">✕</button>
+    </div>`;
+  wmFb.querySelector('.file-badge-clear').addEventListener('click', () => {
+    wmImageFile = null;
+    wmFb.innerHTML = '';
+    wmFi.value = '';
+  });
+}
+wmFi.addEventListener('change', () => { if (wmFi.files[0]) setWmImage(wmFi.files[0]); });
+wmDz.addEventListener('drop', e => {
+  e.preventDefault();
+  wmDz.classList.remove('over');
+  if (e.dataTransfer.files[0]) setWmImage(e.dataTransfer.files[0]);
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Watermark mode toggle
+══════════════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('#wm-mode-seg .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.mode;
+    document.getElementById('wm-text-panel').style.display  = mode === 'text'  ? '' : 'none';
+    document.getElementById('wm-image-panel').style.display = mode === 'image' ? '' : 'none';
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Range sliders with live display
+══════════════════════════════════════════════════════════════════════════ */
+function linkRange(rangeId, displayId, transform) {
+  const r = document.getElementById(rangeId);
+  const d = document.getElementById(displayId);
+  r.addEventListener('input', () => { d.textContent = transform(r.value); });
+}
+linkRange('wm-fontsize', 'wm-fs-val',   v => v);
+linkRange('wm-opacity',  'wm-op-val',   v => (v / 100).toFixed(2));
+linkRange('wm-angle',    'wm-ang-val',  v => v);
+linkRange('wm-img-opacity','wm-img-op-val', v => (v / 100).toFixed(2));
+linkRange('wm-scale',    'wm-sc-val',   v => (v / 100).toFixed(2));
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Color picker ↔ hex input sync
+══════════════════════════════════════════════════════════════════════════ */
+const colorPicker = document.getElementById('wm-color');
+const colorHex    = document.getElementById('wm-color-hex');
+colorPicker.addEventListener('input', () => { colorHex.value = colorPicker.value.toUpperCase(); });
+colorHex.addEventListener('input', () => {
+  if (/^#[0-9A-Fa-f]{6}$/.test(colorHex.value)) colorPicker.value = colorHex.value;
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Position grid (pagenumbers)
+══════════════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('#pn-pos-grid .pos-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#pn-pos-grid .pos-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+function selectedPosition() {
+  return document.querySelector('#pn-pos-grid .pos-btn.active')?.dataset.pos || 'bottom-center';
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Form submission + download
+══════════════════════════════════════════════════════════════════════════ */
+function setLoading(tool, on) {
+  const btn = document.getElementById(`btn-${tool}`);
+  if (on) {
+    btn._label = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner"></span> Processing…';
+    btn.disabled = true;
+  } else {
+    btn.innerHTML = btn._label;
+    btn.disabled = false;
+  }
+}
+
+function showResult(tool, ok, msg, filename, blob) {
+  const card = document.getElementById(`res-${tool}`);
+  const inner = card.querySelector('.result-inner');
+  card.className = `result-card ${ok ? 'show-ok' : 'show-err'}`;
+  inner.querySelector('.result-icon').textContent = ok ? '✅' : '❌';
+  inner.querySelector('.result-title').textContent = ok ? 'Success' : 'Error';
+  inner.querySelector('.result-msg').textContent   = msg;
+
+  const dlDiv = inner.querySelector('.result-dl');
+  if (ok && blob) {
+    const url = URL.createObjectURL(blob);
+    dlDiv.innerHTML = `<a class="btn-dl" href="${url}" download="${filename}">⬇ Download ${filename}</a>`;
+    // Auto-trigger download
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    // Revoke after a delay
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } else {
+    dlDiv.innerHTML = '';
+  }
+
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function submit(tool, buildFd, downloadName) {
+  let fd;
+  try { fd = buildFd(); }
+  catch (e) { toast(e.message, 'err'); return; }
+
+  setLoading(tool, true);
+  try {
+    const res = await fetch(`/api/${tool}`, { method: 'POST', body: fd });
+    const msgHeader = res.headers.get('X-Message');
+    const msg = msgHeader ? decodeURIComponent(msgHeader) : '';
+
+    if (res.ok) {
+      const blob = await res.blob();
+      const name = res.headers.get('Content-Disposition')?.match(/filename="(.+?)"/)?.[1] || downloadName;
+      showResult(tool, true, msg, name, blob);
+    } else {
+      const data = await res.json().catch(() => ({ error: 'Server error' }));
+      showResult(tool, false, data.error || 'Unknown error', null, null);
+    }
+  } catch (e) {
+    showResult(tool, false, 'Network error: ' + e.message, null, null);
+  } finally {
+    setLoading(tool, false);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Per-tool submit bindings
+══════════════════════════════════════════════════════════════════════════ */
+
+// MERGE
+document.getElementById('btn-merge').addEventListener('click', () => {
+  submit('merge', () => {
+    const files = flMerge.getFiles();
+    if (files.length < 2) throw new Error('Add at least two PDF files');
+    const fd = new FormData();
+    files.forEach(f => fd.append('files', f));
+    return fd;
+  }, 'merged.pdf');
+});
+
+// SPLIT
+document.getElementById('btn-split').addEventListener('click', () => {
+  submit('split', () => {
+    const file = currentFiles['split'];
+    if (!file) throw new Error('Upload a PDF file first');
+    const pages = document.getElementById('split-pages').value.trim();
+    if (!pages) throw new Error('Enter page ranges (e.g. 1-3,5)');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('pages', pages);
+    return fd;
+  }, 'split.pdf');
+});
+
+// ROTATE
+document.getElementById('btn-rotate').addEventListener('click', () => {
+  submit('rotate', () => {
+    const file = currentFiles['rotate'];
+    if (!file) throw new Error('Upload a PDF file first');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('degrees', segValue('rotate-deg-seg'));
+    const pages = document.getElementById('rotate-pages').value.trim();
+    if (pages) fd.append('pages', pages);
+    return fd;
+  }, 'rotated.pdf');
+});
+
+// PAGE NUMBERS
+document.getElementById('btn-pagenumbers').addEventListener('click', () => {
+  submit('pagenumbers', () => {
+    const file = currentFiles['pagenumbers'];
+    if (!file) throw new Error('Upload a PDF file first');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('position', selectedPosition());
+    fd.append('format',   document.getElementById('pn-format').value || '{n}');
+    fd.append('start',    document.getElementById('pn-start').value);
+    fd.append('font_size',document.getElementById('pn-fontsize').value);
+    fd.append('margin',   document.getElementById('pn-margin').value);
+    const skip = document.getElementById('pn-skip').value.trim();
+    if (skip) fd.append('skip', skip);
+    return fd;
+  }, 'numbered.pdf');
+});
+
+// REORDER
+document.getElementById('btn-reorder').addEventListener('click', () => {
+  submit('reorder', () => {
+    const file = currentFiles['reorder'];
+    if (!file) throw new Error('Upload a PDF file first');
+    const pages = document.getElementById('reorder-pages').value.trim();
+    if (!pages) throw new Error('Enter the new page order (e.g. 3,1,2)');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('pages', pages);
+    return fd;
+  }, 'reordered.pdf');
+});
+
+// COMPRESS
+document.getElementById('btn-compress').addEventListener('click', () => {
+  submit('compress', () => {
+    const file = currentFiles['compress'];
+    if (!file) throw new Error('Upload a PDF file first');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('quality', segValue('compress-q-seg'));
+    return fd;
+  }, 'compressed.pdf');
+});
+
+// WATERMARK
+document.getElementById('btn-watermark').addEventListener('click', () => {
+  submit('watermark', () => {
+    const file = currentFiles['watermark'];
+    if (!file) throw new Error('Upload a PDF file first');
+    const mode = segValue('wm-mode-seg');
+    const fd = new FormData();
+    fd.append('file', file);
+    if (mode === 'text') {
+      const text = document.getElementById('wm-text').value.trim();
+      if (!text) throw new Error('Enter watermark text');
+      fd.append('text', text);
+      fd.append('color',     colorHex.value);
+      fd.append('font_size', document.getElementById('wm-fontsize').value);
+      fd.append('opacity',   (document.getElementById('wm-opacity').value / 100).toFixed(2));
+      fd.append('angle',     document.getElementById('wm-angle').value);
+    } else {
+      if (!wmImageFile) throw new Error('Upload a watermark image');
+      fd.append('watermark_image', wmImageFile);
+      fd.append('opacity', (document.getElementById('wm-img-opacity').value / 100).toFixed(2));
+      fd.append('scale',   (document.getElementById('wm-scale').value / 100).toFixed(2));
+    }
+    const pages = document.getElementById('wm-pages').value.trim();
+    if (pages) fd.append('pages', pages);
+    return fd;
+  }, 'watermarked.pdf');
+});
+
+// TO IMAGE
+document.getElementById('btn-toimage').addEventListener('click', () => {
+  submit('toimage', () => {
+    const file = currentFiles['toimage'];
+    if (!file) throw new Error('Upload a PDF file first');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('format', segValue('img-fmt-seg'));
+    fd.append('dpi',    document.getElementById('img-dpi').value);
+    const pages = document.getElementById('img-pages').value.trim();
+    if (pages) fd.append('pages', pages);
+    return fd;
+  }, 'images.zip');
+});
+
+// TO PDF
+document.getElementById('btn-topdf').addEventListener('click', () => {
+  submit('topdf', () => {
+    const files = flTopdf.getFiles();
+    if (files.length === 0) throw new Error('Add at least one image');
+    const fd = new FormData();
+    files.forEach(f => fd.append('files', f));
+    fd.append('page_size', segValue('topdf-size-seg'));
+    fd.append('margin',    document.getElementById('topdf-margin').value);
+    return fd;
+  }, 'output.pdf');
+});
+</script>
+</body>
+</html>
