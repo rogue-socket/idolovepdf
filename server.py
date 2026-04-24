@@ -499,6 +499,96 @@ def api_topdf():
     return file_resp(out, "output.pdf", "application/pdf", msg)
 
 
+# ── protect ───────────────────────────────────────────────────────────────────
+
+@app.route("/api/protect", methods=["POST"])
+def api_protect():
+    f = request.files.get("file")
+    if not f:
+        return bad_request("No PDF file provided")
+
+    user_pw = request.form.get("user_password", "").strip() or None
+    owner_pw = request.form.get("owner_password", "").strip() or None
+
+    if not user_pw and not owner_pw:
+        return bad_request("Provide at least one password")
+
+    encryption, err = parse_choice_field(
+        "encryption", "AES-256", {"AES-128", "AES-256"}, label="encryption"
+    )
+    if err:
+        return err
+
+    permissions = request.form.get("permissions", "").strip() or None
+
+    inp = save_upload(f)
+    out = tmp_path()
+
+    ok, msg = run_cmd(pdftool.cmd_protect, {
+        "input": inp, "output": out,
+        "user_password": user_pw,
+        "owner_password": owner_pw,
+        "encryption": encryption,
+        "permissions": permissions,
+    })
+    _rm(inp)
+
+    if not ok:
+        _rm(out)
+        return jsonify(error=msg), 400
+    return file_resp(out, "protected.pdf", "application/pdf", msg)
+
+
+# ── unlock ────────────────────────────────────────────────────────────────────
+
+@app.route("/api/unlock", methods=["POST"])
+def api_unlock():
+    f = request.files.get("file")
+    if not f:
+        return bad_request("No PDF file provided")
+
+    password = request.form.get("password", "").strip()
+    if not password:
+        return bad_request("Enter the PDF password")
+
+    inp = save_upload(f)
+    out = tmp_path()
+
+    ok, msg = run_cmd(pdftool.cmd_unlock, {
+        "input": inp, "output": out,
+        "password": password,
+    })
+    _rm(inp)
+
+    if not ok:
+        _rm(out)
+        return jsonify(error=msg), 400
+    return file_resp(out, "unlocked.pdf", "application/pdf", msg)
+
+
+# ── extract ───────────────────────────────────────────────────────────────────
+
+@app.route("/api/extract", methods=["POST"])
+def api_extract():
+    f = request.files.get("file")
+    if not f:
+        return bad_request("No PDF file provided")
+
+    inp = save_upload(f)
+    out = tmp_path(suffix=".txt")
+
+    ok, msg = run_cmd(pdftool.cmd_extract, {
+        "input": inp, "output": out,
+        "pages": request.form.get("pages", "").strip() or None,
+    })
+    _rm(inp)
+
+    if not ok:
+        _rm(out)
+        return jsonify(error=msg), 400
+    return file_resp(out, "extracted.txt", "text/plain; charset=utf-8", msg)
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Entry point
 # ══════════════════════════════════════════════════════════════════════════════

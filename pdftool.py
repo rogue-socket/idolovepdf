@@ -3,7 +3,8 @@
 pdftool – A local PDF toolkit CLI.
 
 Subcommands: merge, split, rotate, pagenumbers, reorder,
-             compress, watermark, toimage, topdf
+             compress, watermark, toimage, topdf, protect,
+             unlock, extract
 
 Dependencies: pymupdf (fitz), Pillow
 """
@@ -697,6 +698,150 @@ def cmd_topdf(args) -> None:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# protect
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+_ENCRYPT_METHODS = {
+    "AES-128": fitz.PDF_ENCRYPT_AES_128,
+    "AES-256": fitz.PDF_ENCRYPT_AES_256,
+}
+
+# PyMuPDF permission flags
+_PERM_FLAGS = {
+    "print":    fitz.PDF_PERM_PRINT,
+    "modify":   fitz.PDF_PERM_MODIFY,
+    "copy":     fitz.PDF_PERM_COPY,
+    "annotate": fitz.PDF_PERM_ANNOTATE,
+}
+
+
+def cmd_protect(args) -> None:
+    """Encrypt a PDF with a password."""
+    require_file(args.input)
+    ensure_parent_exists(args.output)
+
+    if not args.user_password and not args.owner_password:
+        error("Provide at least one of --user-password or --owner-password")
+
+    method = _ENCRYPT_METHODS.get(args.encryption)
+    if method is None:
+        error(f"--encryption must be one of: {', '.join(_ENCRYPT_METHODS)}")
+
+    # Build permission bitmask
+    perm = 0
+    if args.permissions:
+        perm_list = [x.strip() for x in args.permissions.split(",")]
+        for p in perm_list:
+            if p not in _PERM_FLAGS:
+                error(f"Unknown permission '{p}'. Valid: {', '.join(_PERM_FLAGS)}")
+            perm |= _PERM_FLAGS[p]
+    else:
+        # Default: grant all permissions
+        for flag in _PERM_FLAGS.values():
+            perm |= flag
+
+    doc = open_pdf(args.input)
+
+    doc.save(
+        args.output,
+        encryption=method,
+        user_pw=args.user_password or "",
+        owner_pw=args.owner_password or args.user_password or "",
+        permissions=perm,
+        garbage=3,
+        deflate=True,
+    )
+    doc.close()
+
+    parts = []
+    if args.user_password:
+        parts.append("user password set")
+    if args.owner_password:
+        parts.append("owner password set")
+    print(
+        f"Protected '{args.input}' → {args.output} "
+        f"({', '.join(parts)}, {args.encryption})"
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# unlock
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def cmd_unlock(args) -> None:
+    """Remove encryption from a PDF given the correct password."""
+    require_file(args.input)
+    ensure_parent_exists(args.output)
+
+    try:
+        doc = fitz.open(str(args.input))
+    except Exception as exc:
+        error(f"Cannot open '{args.input}': {exc}")
+
+    if not doc.is_pdf:
+        doc.close()
+        error(f"'{args.input}' does not appear to be a PDF file")
+
+    if not doc.is_encrypted:
+        doc.close()
+        error("This PDF is not encrypted")
+
+    if not doc.authenticate(args.password):
+        doc.close()
+        error("Incorrect password")
+
+    # Save without encryption
+    doc.save(args.output, garbage=3, deflate=True)
+    doc.close()
+    print(f"Unlocked '{args.input}' → {args.output}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# extract
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def cmd_extract(args) -> None:
+    """Extract text content from PDF pages."""
+    require_file(args.input)
+
+    doc = open_pdf(args.input)
+    total = len(doc)
+
+    pages = (
+        parse_page_ranges(args.pages, total)
+        if args.pages
+        else list(range(total))
+    )
+
+    out_path = Path(args.output) if args.output else None
+    if out_path:
+        ensure_parent_exists(args.output)
+
+    chunks = []
+    for idx in pages:
+        page = doc[idx]
+        text = page.get_text("text").strip()
+        if text:
+            chunks.append(f"--- Page {idx + 1} ---\n{text}")
+
+    doc.close()
+
+    result = "\n\n".join(chunks) if chunks else "(No text found)"
+
+    if out_path:
+        out_path.write_text(result, encoding="utf-8")
+        print(
+            f"Extracted text from {len(pages)} page(s) → {args.output} "
+            f"({len(result)} characters)"
+        )
+    else:
+        print(result)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # CLI – argument parser
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -943,6 +1088,77 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--margin", type=float, default=20, metavar="PT",
                    help="Margin in PDF points (default: 20)")
     p.set_defaults(func=cmd_topdf)
+
+    # ── protect ──────────────────────────────────────────────────────────────
+    p = sub.add_parser(
+        "protect",
+        help="Password-protect (encrypt) a PDF",
+        description=(
+            "Encrypt a PDF with a user password (required to open) "
+            "and/or an owner password (required to change permissions)."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=textwrap.dedent("""\
+            examples:
+              pdftool protect doc.pdf --user-password secret -o secured.pdf
+              pdftool protect doc.pdf --owner-password admin --permissions print,copy -o secured.pdf
+              pdftool protect doc.pdf --user-password open --owner-password admin --encryption AES-256 -o secured.pdf
+        """),
+    )
+    p.add_argument("input", help="Input PDF file")
+    p.add_argument("-o", "--output", required=True, metavar="OUTPUT",
+                   help="Output PDF path")
+    p.add_argument("--user-password", metavar="PW",
+                   help="Password required to open the PDF")
+    p.add_argument("--owner-password", metavar="PW",
+                   help="Password required to change permissions")
+    p.add_argument("--encryption", default="AES-256",
+                   choices=["AES-128", "AES-256"],
+                   help="Encryption method (default: AES-256)")
+    p.add_argument("--permissions", metavar="LIST",
+                   help="Comma-separated: print,modify,copy,annotate (default: all)")
+    p.set_defaults(func=cmd_protect)
+
+    # ── unlock ───────────────────────────────────────────────────────────────
+    p = sub.add_parser(
+        "unlock",
+        help="Remove password protection from a PDF",
+        description="Decrypt a password-protected PDF and save an unencrypted copy.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=textwrap.dedent("""\
+            examples:
+              pdftool unlock secured.pdf --password secret -o unlocked.pdf
+        """),
+    )
+    p.add_argument("input", help="Input (encrypted) PDF file")
+    p.add_argument("-o", "--output", required=True, metavar="OUTPUT",
+                   help="Output PDF path")
+    p.add_argument("--password", required=True, metavar="PW",
+                   help="Password to unlock the PDF")
+    p.set_defaults(func=cmd_unlock)
+
+    # ── extract ──────────────────────────────────────────────────────────────
+    p = sub.add_parser(
+        "extract",
+        help="Extract text content from a PDF",
+        description=(
+            "Extract all text from each page and output as plain text. "
+            "Optionally select specific pages."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=textwrap.dedent("""\
+            examples:
+              pdftool extract doc.pdf
+              pdftool extract doc.pdf -o text.txt
+              pdftool extract doc.pdf --pages 1-5 -o chapter1.txt
+        """),
+    )
+    p.add_argument("input", help="Input PDF file")
+    p.add_argument("-o", "--output", metavar="OUTPUT",
+                   help="Output text file (omit to print to stdout)")
+    p.add_argument("--pages", metavar="PAGES",
+                   help="Pages to extract text from (default: all)")
+    p.set_defaults(func=cmd_extract)
 
     return parser
 

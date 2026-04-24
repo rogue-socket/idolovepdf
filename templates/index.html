@@ -424,6 +424,15 @@
     <button class="nav-item" data-tool="topdf">
       <span class="nav-icon">📄</span> To PDF
     </button>
+    <button class="nav-item" data-tool="protect">
+      <span class="nav-icon">🔒</span> Protect
+    </button>
+    <button class="nav-item" data-tool="unlock">
+      <span class="nav-icon">🔓</span> Unlock
+    </button>
+    <button class="nav-item" data-tool="extract">
+      <span class="nav-icon">📝</span> Extract Text
+    </button>
   </nav>
 </aside>
 
@@ -937,6 +946,167 @@
     </div></div>
   </section>
 
+  <!-- ── PROTECT ────────────────────────────────────────────────────────── -->
+  <section class="tool-section" id="section-protect">
+    <div class="tool-header">
+      <div class="tool-emoji">🔒</div>
+      <div>
+        <h1 class="tool-title">Protect PDF</h1>
+        <p class="tool-desc">Encrypt a PDF with a password to restrict opening or editing.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input File</div>
+      <div class="drop-zone" id="dz-protect">
+        <input type="file" id="fi-protect" accept=".pdf">
+        <span class="drop-icon">📄</span>
+        <div class="drop-main">Drop a PDF here or click to browse</div>
+      </div>
+      <div id="fb-protect"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Passwords</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="protect-user-pw">User password</label>
+          <input type="text" id="protect-user-pw" placeholder="Required to open the PDF">
+          <span class="hint">Leave blank to allow opening without a password.</span>
+        </div>
+        <div class="form-group">
+          <label for="protect-owner-pw">Owner password</label>
+          <input type="text" id="protect-owner-pw" placeholder="Required to change permissions">
+          <span class="hint">Controls editing, printing, and copying restrictions.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Options</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Encryption</label>
+          <div class="seg" id="protect-enc-seg">
+            <button class="seg-btn" data-val="AES-128">AES-128</button>
+            <button class="seg-btn active" data-val="AES-256">AES-256</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="protect-perms">Permissions</label>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:2px">
+            <label style="font-weight:400;display:flex;align-items:center;gap:6px">
+              <input type="checkbox" id="perm-print" checked> Allow printing
+            </label>
+            <label style="font-weight:400;display:flex;align-items:center;gap:6px">
+              <input type="checkbox" id="perm-copy" checked> Allow copying text
+            </label>
+            <label style="font-weight:400;display:flex;align-items:center;gap:6px">
+              <input type="checkbox" id="perm-modify" checked> Allow modifying
+            </label>
+            <label style="font-weight:400;display:flex;align-items:center;gap:6px">
+              <input type="checkbox" id="perm-annotate" checked> Allow annotating
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-protect">🔒 Protect PDF</button>
+    </div>
+    <div class="result-card" id="res-protect"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ── UNLOCK ─────────────────────────────────────────────────────────── -->
+  <section class="tool-section" id="section-unlock">
+    <div class="tool-header">
+      <div class="tool-emoji">🔓</div>
+      <div>
+        <h1 class="tool-title">Unlock PDF</h1>
+        <p class="tool-desc">Remove password protection from an encrypted PDF.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input File</div>
+      <div class="drop-zone" id="dz-unlock">
+        <input type="file" id="fi-unlock" accept=".pdf">
+        <span class="drop-icon">📄</span>
+        <div class="drop-main">Drop an encrypted PDF here or click to browse</div>
+      </div>
+      <div id="fb-unlock"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Password</div>
+      <div class="form-group">
+        <label for="unlock-pw">PDF password <span style="color:var(--error)">*</span></label>
+        <input type="text" id="unlock-pw" placeholder="Enter the password to unlock">
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-unlock">🔓 Unlock PDF</button>
+    </div>
+    <div class="result-card" id="res-unlock"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ── EXTRACT TEXT ───────────────────────────────────────────────────── -->
+  <section class="tool-section" id="section-extract">
+    <div class="tool-header">
+      <div class="tool-emoji">📝</div>
+      <div>
+        <h1 class="tool-title">Extract Text</h1>
+        <p class="tool-desc">Pull all text content from a PDF and download as a text file.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Input File</div>
+      <div class="drop-zone" id="dz-extract">
+        <input type="file" id="fi-extract" accept=".pdf">
+        <span class="drop-icon">📄</span>
+        <div class="drop-main">Drop a PDF here or click to browse</div>
+      </div>
+      <div id="fb-extract"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Options</div>
+      <div class="form-group">
+        <label for="extract-pages">Pages (optional)</label>
+        <input type="text" id="extract-pages" placeholder="e.g. 1-5 (blank = all pages)">
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn-primary" id="btn-extract">📝 Extract Text</button>
+    </div>
+    <div class="result-card" id="res-extract"><div class="result-inner">
+      <span class="result-icon"></span>
+      <div class="result-body">
+        <div class="result-title"></div>
+        <div class="result-msg"></div>
+        <div class="result-dl"></div>
+      </div>
+    </div></div>
+  </section>
+
 </main><!-- /#main -->
 
 <div id="toasts"></div>
@@ -987,7 +1157,7 @@ function initSeg(segId) {
 }
 
 // Initialise all segmented controls
-['rotate-deg-seg','compress-q-seg','img-fmt-seg','topdf-size-seg','wm-mode-seg'].forEach(initSeg);
+['rotate-deg-seg','compress-q-seg','img-fmt-seg','topdf-size-seg','wm-mode-seg','protect-enc-seg'].forEach(initSeg);
 
 /* ══════════════════════════════════════════════════════════════════════════
    Single-file drop zones
@@ -1033,7 +1203,7 @@ function singleDropZone(toolId) {
   });
 }
 
-['split','rotate','pagenumbers','reorder','compress','watermark','toimage'].forEach(singleDropZone);
+['split','rotate','pagenumbers','reorder','compress','watermark','toimage','protect','unlock','extract'].forEach(singleDropZone);
 
 /* ══════════════════════════════════════════════════════════════════════════
    Multi-file list manager (merge & topdf)
@@ -1386,6 +1556,59 @@ document.getElementById('btn-topdf').addEventListener('click', () => {
     fd.append('margin',    document.getElementById('topdf-margin').value);
     return fd;
   }, 'output.pdf');
+});
+
+// PROTECT
+document.getElementById('btn-protect').addEventListener('click', () => {
+  submit('protect', () => {
+    const file = currentFiles['protect'];
+    if (!file) throw new Error('Upload a PDF file first');
+    const userPw  = document.getElementById('protect-user-pw').value.trim();
+    const ownerPw = document.getElementById('protect-owner-pw').value.trim();
+    if (!userPw && !ownerPw) throw new Error('Enter at least one password');
+    const fd = new FormData();
+    fd.append('file', file);
+    if (userPw)  fd.append('user_password', userPw);
+    if (ownerPw) fd.append('owner_password', ownerPw);
+    fd.append('encryption', segValue('protect-enc-seg'));
+    // Build permissions string from checkboxes
+    const perms = [];
+    if (document.getElementById('perm-print').checked)    perms.push('print');
+    if (document.getElementById('perm-copy').checked)     perms.push('copy');
+    if (document.getElementById('perm-modify').checked)   perms.push('modify');
+    if (document.getElementById('perm-annotate').checked) perms.push('annotate');
+    if (perms.length > 0 && perms.length < 4) {
+      fd.append('permissions', perms.join(','));
+    }
+    return fd;
+  }, 'protected.pdf');
+});
+
+// UNLOCK
+document.getElementById('btn-unlock').addEventListener('click', () => {
+  submit('unlock', () => {
+    const file = currentFiles['unlock'];
+    if (!file) throw new Error('Upload a PDF file first');
+    const pw = document.getElementById('unlock-pw').value.trim();
+    if (!pw) throw new Error('Enter the PDF password');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('password', pw);
+    return fd;
+  }, 'unlocked.pdf');
+});
+
+// EXTRACT TEXT
+document.getElementById('btn-extract').addEventListener('click', () => {
+  submit('extract', () => {
+    const file = currentFiles['extract'];
+    if (!file) throw new Error('Upload a PDF file first');
+    const fd = new FormData();
+    fd.append('file', file);
+    const pages = document.getElementById('extract-pages').value.trim();
+    if (pages) fd.append('pages', pages);
+    return fd;
+  }, 'extracted.txt');
 });
 </script>
 </body>
