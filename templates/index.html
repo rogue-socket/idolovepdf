@@ -495,6 +495,73 @@
     .toast.err { background: #1a1d2e; color: #fca5a5; }
     @keyframes slide-in { from { transform: translateX(40px); opacity: 0; } }
 
+
+    /* ── Live preview ────────────────────────────────────────────────── */
+    .live-preview {
+      margin-top: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .live-preview-header {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: .6px;
+      margin-bottom: 12px;
+    }
+    .live-preview-header::before {
+      content: '';
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: live-pulse 1.5s ease infinite;
+    }
+    @keyframes live-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .3; }
+    }
+    .live-preview .preview-strip { padding-top: 0; max-height: 440px; }
+
+    .preview-thumb.dimmed { opacity: .25; filter: grayscale(.6); }
+    .preview-thumb.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(91,106,240,.25); }
+    .preview-thumb.rotated-90 img { transform: rotate(90deg); }
+    .preview-thumb.rotated-180 img { transform: rotate(180deg); }
+    .preview-thumb.rotated-270 img { transform: rotate(270deg); }
+    .preview-thumb .page-overlay {
+      position: absolute;
+      color: rgba(0,0,0,.55);
+      font-weight: 700;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .preview-thumb .wm-overlay {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) rotate(var(--wm-angle, 45deg));
+      font-weight: 700;
+      pointer-events: none;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .live-preview .preview-thumb .reorder-badge {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 22px; height: 22px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+    .live-preview-empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 20px 0;
+    }
     .divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
   </style>
 </head>
@@ -573,6 +640,8 @@
       <div class="file-list" id="fl-merge"></div>
     </div>
 
+    <div id="live-merge" class="live-preview" style="display:none"></div>
+
     <div class="card">
       <button class="btn-primary" id="btn-merge">Merge PDFs</button>
       <div class="progress-bar" id="prog-merge"><div class="progress-fill"></div></div>
@@ -617,6 +686,8 @@
         <span class="hint">Comma-separated ranges and individual pages (1-indexed).</span>
       </div>
     </div>
+
+    <div id="live-split" class="live-preview" style="display:none"></div>
 
     <div class="card">
       <button class="btn-primary" id="btn-split">Extract Pages</button>
@@ -671,6 +742,8 @@
         </div>
       </div>
     </div>
+
+    <div id="live-rotate" class="live-preview" style="display:none"></div>
 
     <div class="card">
       <button class="btn-primary" id="btn-rotate">Rotate</button>
@@ -746,6 +819,8 @@
       </div>
     </div>
 
+    <div id="live-pagenumbers" class="live-preview" style="display:none"></div>
+
     <div class="card">
       <button class="btn-primary" id="btn-pagenumbers">Add Page Numbers</button>
       <div class="progress-bar" id="prog-pagenumbers"><div class="progress-fill"></div></div>
@@ -790,6 +865,8 @@
         <span class="hint">Comma-separated 1-indexed page numbers in the desired order.</span>
       </div>
     </div>
+
+    <div id="live-reorder" class="live-preview" style="display:none"></div>
 
     <div class="card">
       <button class="btn-primary" id="btn-reorder">Reorder Pages</button>
@@ -949,6 +1026,8 @@
         <input type="text" id="wm-pages" placeholder="e.g. 2-5 (blank = all pages)">
       </div>
     </div>
+
+    <div id="live-watermark" class="live-preview" style="display:none"></div>
 
     <div class="card">
       <button class="btn-primary" id="btn-watermark">Apply Watermark</button>
@@ -1346,6 +1425,7 @@ function showPreviewLoading(container) {
    Single-file drop zones with preview
 ══════════════════════════════════════════════════════════════════════════ */
 const currentFiles = {};
+const previewCache = {};
 
 function singleDropZone(toolId, opts = {}) {
   const dz = document.getElementById(`dz-${toolId}`);
@@ -1356,6 +1436,7 @@ function singleDropZone(toolId, opts = {}) {
   function setFile(file) {
     if (!file) return;
     currentFiles[toolId] = file;
+    delete previewCache[toolId];
 
     // Transform the drop zone into a file badge
     dz.classList.add('has-file');
@@ -1377,16 +1458,19 @@ function singleDropZone(toolId, opts = {}) {
       showPreviewLoading(previewEl);
       fetchPreview(file).then(data => {
         renderPreview(previewEl, data);
+        previewCache[toolId] = data;
         if (data) {
           const pagesLabel = document.getElementById(`pages-${toolId}`);
           if (pagesLabel) pagesLabel.textContent = `${data.total_pages} page${data.total_pages !== 1 ? 's' : ''}`;
         }
+        if (typeof triggerLivePreview === 'function') triggerLivePreview(toolId);
       });
     }
   }
 
   function clearFile() {
     delete currentFiles[toolId];
+    delete previewCache[toolId];
     dz.classList.remove('has-file');
     dz.innerHTML = `
       <input type="file" id="fi-${toolId}" accept=".pdf">
@@ -1394,6 +1478,8 @@ function singleDropZone(toolId, opts = {}) {
       <div class="drop-main">Drop a PDF here or click to browse</div>
       <div class="drop-hint">Select a PDF to see a preview of its pages</div>`;
     if (previewEl) previewEl.innerHTML = '';
+    const liveEl = document.getElementById(`live-${toolId}`);
+    if (liveEl) { liveEl.style.display = 'none'; liveEl.innerHTML = ''; }
     // Re-bind the new file input
     const newFi = document.getElementById(`fi-${toolId}`);
     newFi.addEventListener('change', () => { if (newFi.files[0]) setFile(newFi.files[0]); });
@@ -1907,6 +1993,311 @@ document.getElementById('btn-extract').addEventListener('click', () => {
     return fd;
   }, editName(currentFiles['extract'], 'extracted_edit.txt').replace(/_edit\.pdf$/, '_edit.txt'));
 });
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Live Preview Engine
+══════════════════════════════════════════════════════════════════════════ */
+
+function parsePageRanges(input, totalPages) {
+  const pages = new Set();
+  if (!input || !input.trim()) return pages;
+  for (const part of input.split(',')) {
+    const trimmed = part.trim();
+    const m = trimmed.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (m) {
+      const lo = Math.max(1, parseInt(m[1]));
+      const hi = Math.min(totalPages, parseInt(m[2]));
+      for (let i = lo; i <= hi; i++) pages.add(i);
+    } else {
+      const n = parseInt(trimmed);
+      if (n >= 1 && n <= totalPages) pages.add(n);
+    }
+  }
+  return pages;
+}
+
+function liveHeader() {
+  return '<div class="live-preview-header">Live Preview</div>';
+}
+
+function thumbHtml(p, extras = '') {
+  return `<div class="preview-thumb${extras}"><img src="${p.data}" alt="Page ${p.page}"><div class="preview-thumb-label">${p.page}</div></div>`;
+}
+
+/* ── Reorder ──────────────────────────────────────────────────────────── */
+function updateLiveReorder() {
+  const container = document.getElementById('live-reorder');
+  const data = previewCache['reorder'];
+  if (!data || !data.pages || data.pages.length === 0) { container.style.display = 'none'; return; }
+
+  const input = document.getElementById('reorder-pages').value.trim();
+  if (!input) { container.style.display = 'none'; return; }
+
+  const order = input.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+  if (order.length === 0) { container.style.display = 'none'; return; }
+
+  const pageMap = {};
+  data.pages.forEach(p => { pageMap[p.page] = p; });
+
+  let html = liveHeader() + '<div class="preview-strip">';
+  let pos = 0;
+  for (const num of order) {
+    pos++;
+    const p = pageMap[num];
+    if (p) {
+      html += `<div class="preview-thumb selected">
+        <img src="${p.data}" alt="Page ${p.page}">
+        <div class="preview-thumb-label">${p.page}</div>
+        <div class="reorder-badge">${pos}</div>
+      </div>`;
+    } else if (num >= 1 && num <= data.total_pages) {
+      html += `<div class="preview-thumb selected" style="min-height:100px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)">
+        <div>Page ${num}</div>
+        <div class="preview-thumb-label">${num}</div>
+        <div class="reorder-badge">${pos}</div>
+      </div>`;
+    }
+  }
+  html += '</div>';
+  container.innerHTML = html;
+  container.style.display = '';
+}
+
+document.getElementById('reorder-pages').addEventListener('input', updateLiveReorder);
+
+/* ── Split ────────────────────────────────────────────────────────────── */
+function updateLiveSplit() {
+  const container = document.getElementById('live-split');
+  const data = previewCache['split'];
+  if (!data || !data.pages || data.pages.length === 0) { container.style.display = 'none'; return; }
+
+  const input = document.getElementById('split-pages').value.trim();
+  if (!input) { container.style.display = 'none'; return; }
+
+  const selected = parsePageRanges(input, data.total_pages);
+  if (selected.size === 0) { container.style.display = 'none'; return; }
+
+  let html = liveHeader() + '<div class="preview-strip">';
+  for (const p of data.pages) {
+    const isSel = selected.has(p.page);
+    html += `<div class="preview-thumb${isSel ? ' selected' : ' dimmed'}">
+      <img src="${p.data}" alt="Page ${p.page}">
+      <div class="preview-thumb-label">${p.page}${isSel ? ' ✓' : ''}</div>
+    </div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+  container.style.display = '';
+}
+
+document.getElementById('split-pages').addEventListener('input', updateLiveSplit);
+
+/* ── Rotate ───────────────────────────────────────────────────────────── */
+function updateLiveRotate() {
+  const container = document.getElementById('live-rotate');
+  const data = previewCache['rotate'];
+  if (!data || !data.pages || data.pages.length === 0) { container.style.display = 'none'; return; }
+
+  const degrees = segValue('rotate-deg-seg') || '90';
+  const pagesInput = document.getElementById('rotate-pages').value.trim();
+  const affected = pagesInput ? parsePageRanges(pagesInput, data.total_pages) : null;
+
+  let html = liveHeader() + '<div class="preview-strip">';
+  for (const p of data.pages) {
+    const shouldRotate = !affected || affected.has(p.page);
+    const cls = shouldRotate ? ` rotated-${degrees}` : '';
+    html += `<div class="preview-thumb${cls}${shouldRotate ? ' selected' : ''}">
+      <img src="${p.data}" alt="Page ${p.page}">
+      <div class="preview-thumb-label">${p.page}${shouldRotate ? ' ↻' + degrees + '°' : ''}</div>
+    </div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+  container.style.display = '';
+}
+
+document.getElementById('rotate-pages').addEventListener('input', updateLiveRotate);
+document.querySelectorAll('#rotate-deg-seg .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => setTimeout(updateLiveRotate, 10));
+});
+
+/* ── Page Numbers ─────────────────────────────────────────────────────── */
+function updateLivePageNumbers() {
+  const container = document.getElementById('live-pagenumbers');
+  const data = previewCache['pagenumbers'];
+  if (!data || !data.pages || data.pages.length === 0) { container.style.display = 'none'; return; }
+
+  container.style.display = '';
+  const pos = document.querySelector('#pn-pos-grid .pos-btn.active')?.dataset.pos || 'bottom-center';
+  const fmt = document.getElementById('pn-format').value || '{n}';
+  const start = parseInt(document.getElementById('pn-start').value) || 1;
+  const fontSize = parseFloat(document.getElementById('pn-fontsize').value) || 12;
+  const skipInput = document.getElementById('pn-skip').value.trim();
+  const skipped = skipInput ? parsePageRanges(skipInput, data.total_pages) : new Set();
+
+  const posStyles = {
+    'top-left':      'top:6px;left:6px;',
+    'top-center':    'top:6px;left:50%;transform:translateX(-50%);',
+    'top-right':     'top:6px;right:6px;',
+    'bottom-left':   'bottom:22px;left:6px;',
+    'bottom-center': 'bottom:22px;left:50%;transform:translateX(-50%);',
+    'bottom-right':  'bottom:22px;right:6px;',
+  };
+
+  let html = liveHeader() + '<div class="preview-strip">';
+  let counter = start;
+  for (const p of data.pages) {
+    const skip = skipped.has(p.page);
+    const label = skip ? '' : fmt.replace(/\{n\}/g, counter).replace(/\{total\}/g, data.total_pages);
+    if (!skip) counter++;
+    const overlaySize = Math.max(8, Math.min(fontSize * 0.8, 18));
+    const overlay = label ? `<div class="page-overlay" style="${posStyles[pos] || posStyles['bottom-center']}font-size:${overlaySize}px;">${label}</div>` : '';
+    html += `<div class="preview-thumb${skip ? '' : ' selected'}" style="position:relative">
+      <img src="${p.data}" alt="Page ${p.page}">
+      ${overlay}
+      <div class="preview-thumb-label">${p.page}</div>
+    </div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+['pn-format','pn-start','pn-fontsize','pn-margin','pn-skip'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateLivePageNumbers);
+});
+document.querySelectorAll('#pn-pos-grid .pos-btn').forEach(btn => {
+  btn.addEventListener('click', () => setTimeout(updateLivePageNumbers, 10));
+});
+
+/* ── Watermark ────────────────────────────────────────────────────────── */
+function updateLiveWatermark() {
+  const container = document.getElementById('live-watermark');
+  const data = previewCache['watermark'];
+  if (!data || !data.pages || data.pages.length === 0) { container.style.display = 'none'; return; }
+
+  const mode = segValue('wm-mode-seg');
+  if (mode !== 'text') { container.style.display = 'none'; return; }
+
+  const text = document.getElementById('wm-text').value.trim();
+  if (!text) { container.style.display = 'none'; return; }
+
+  const color = document.getElementById('wm-color').value || '#FF0000';
+  const opacity = (parseInt(document.getElementById('wm-opacity').value) || 30) / 100;
+  const angle = parseInt(document.getElementById('wm-angle').value) || 45;
+  const fontSize = parseInt(document.getElementById('wm-fontsize').value) || 60;
+  const wmPagesInput = document.getElementById('wm-pages').value.trim();
+  const wmPages = wmPagesInput ? parsePageRanges(wmPagesInput, data.total_pages) : null;
+
+  const overlaySize = Math.max(10, Math.min(fontSize * 0.35, 28));
+
+  let html = liveHeader() + '<div class="preview-strip">';
+  for (const p of data.pages) {
+    const show = !wmPages || wmPages.has(p.page);
+    const overlay = show ? `<div class="wm-overlay" style="color:${color};opacity:${opacity};font-size:${overlaySize}px;--wm-angle:${angle}deg">${text}</div>` : '';
+    html += `<div class="preview-thumb" style="position:relative">
+      <img src="${p.data}" alt="Page ${p.page}">
+      ${overlay}
+      <div class="preview-thumb-label">${p.page}</div>
+    </div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+  container.style.display = '';
+}
+
+['wm-text','wm-pages'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateLiveWatermark);
+});
+['wm-fontsize','wm-opacity','wm-angle'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateLiveWatermark);
+});
+document.getElementById('wm-color').addEventListener('input', updateLiveWatermark);
+document.getElementById('wm-color-hex').addEventListener('input', updateLiveWatermark);
+document.querySelectorAll('#wm-mode-seg .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => setTimeout(updateLiveWatermark, 10));
+});
+
+/* ── Merge ────────────────────────────────────────────────────────────── */
+const mergePreviewCache = [];
+
+async function updateLiveMerge() {
+  const container = document.getElementById('live-merge');
+  const files = flMerge.getFiles();
+  if (files.length === 0) { container.style.display = 'none'; mergePreviewCache.length = 0; return; }
+
+  // Fetch previews for any new files
+  while (mergePreviewCache.length < files.length) {
+    mergePreviewCache.push(null);
+  }
+  mergePreviewCache.length = files.length;
+
+  let needsFetch = false;
+  for (let i = 0; i < files.length; i++) {
+    if (!mergePreviewCache[i] || mergePreviewCache[i]._file !== files[i]) {
+      needsFetch = true;
+      break;
+    }
+  }
+
+  if (needsFetch) {
+    container.style.display = '';
+    container.innerHTML = liveHeader() + '<div class="preview-loading"><span class="spinner-sm"></span> Loading previews...</div>';
+
+    for (let i = 0; i < files.length; i++) {
+      if (!mergePreviewCache[i] || mergePreviewCache[i]._file !== files[i]) {
+        const data = await fetchPreview(files[i]);
+        if (data) data._file = files[i];
+        mergePreviewCache[i] = data;
+      }
+    }
+  }
+
+  let html = liveHeader() + '<div class="preview-strip">';
+  let globalPage = 0;
+  for (let i = 0; i < mergePreviewCache.length; i++) {
+    const data = mergePreviewCache[i];
+    if (!data || !data.pages) continue;
+    const fileColor = ['#5b6af0','#22c55e','#f59e0b','#ef4444','#a855f7','#06b6d4','#ec4899'][i % 7];
+    for (const p of data.pages) {
+      globalPage++;
+      html += `<div class="preview-thumb" style="border-color:${fileColor}">
+        <img src="${p.data}" alt="Page ${globalPage}">
+        <div class="preview-thumb-label" style="background:${fileColor}">${globalPage}</div>
+      </div>`;
+    }
+    if (data.total_pages > data.pages.length) {
+      html += `<div class="preview-more" style="border-color:${fileColor}">+${data.total_pages - data.pages.length}<br>more</div>`;
+      globalPage += data.total_pages - data.pages.length;
+    }
+  }
+  html += '</div>';
+  if (globalPage === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  container.innerHTML = html;
+  container.style.display = '';
+}
+
+// Patch FileListMgr render to trigger live merge preview
+const _origMergeRender = flMerge.render.bind(flMerge);
+flMerge.render = function() {
+  _origMergeRender();
+  updateLiveMerge();
+};
+
+/* ── Trigger helper ───────────────────────────────────────────────────── */
+function triggerLivePreview(toolId) {
+  const updaters = {
+    reorder: updateLiveReorder,
+    split: updateLiveSplit,
+    rotate: updateLiveRotate,
+    pagenumbers: updateLivePageNumbers,
+    watermark: updateLiveWatermark,
+  };
+  if (updaters[toolId]) updaters[toolId]();
+}
 </script>
 </body>
 </html>
