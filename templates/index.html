@@ -564,6 +564,216 @@
     }
 
 
+
+    /* ── Unified Editor ─────────────────────────────────────────────── */
+    .editor-upload {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 50vh;
+    }
+    .editor-upload .drop-zone {
+      max-width: 480px;
+      width: 100%;
+    }
+
+    .editor-workspace { max-width: 960px; }
+
+    .editor-mode-bar {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 5px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+    }
+    .mode-btn {
+      flex: 1;
+      min-width: 90px;
+      padding: 9px 10px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .mode-btn:hover { background: var(--bg); color: var(--text); }
+    .mode-btn.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(91,106,240,.25);
+    }
+    .mode-icon { font-size: 15px; }
+
+    .editor-options-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      display: none;
+    }
+    .editor-options-panel.active { display: block; }
+    .editor-options-panel .opts-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .editor-options-panel .opts-row label {
+      font-size: 13px;
+    }
+    .editor-options-panel .opts-row .seg { min-width: 0; }
+
+    .editor-file-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    .editor-file-bar .efb-name {
+      flex: 1;
+      font-weight: 600;
+      font-size: 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .editor-file-bar .efb-info {
+      color: var(--muted);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .editor-file-bar .efb-btn {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .editor-file-bar .efb-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-light);
+    }
+    .editor-file-bar .efb-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .editor-file-bar .efb-btn.primary:hover {
+      background: var(--accent-h);
+    }
+    .editor-file-bar .efb-btn.danger:hover {
+      border-color: var(--error);
+      color: var(--error);
+      background: var(--error-bg);
+    }
+
+    .editor-hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 6px 0 10px;
+      font-style: italic;
+    }
+
+
+    /* ── Editor merge file list ─────────────────────────────────────── */
+    .ed-merge-list {
+      display: flex; flex-direction: column; gap: 6px;
+      margin-top: 8px; max-height: 200px; overflow-y: auto;
+    }
+    .ed-merge-item {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; font-size: 13px;
+    }
+    .ed-merge-item .emi-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ed-merge-item .emi-size { color: var(--muted); font-size: 11px; }
+    .ed-merge-item .emi-remove {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 16px; padding: 0 4px; line-height: 1;
+    }
+    .ed-merge-item .emi-remove:hover { color: #ef4444; }
+    .ed-merge-order { cursor: grab; color: var(--muted); font-size: 14px; }
+    .editor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .editor-action-bar {
+      position: sticky;
+      bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 20px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.08);
+      z-index: 10;
+    }
+    .editor-action-bar .act-btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .editor-action-bar .act-btn.apply {
+      background: var(--accent);
+      color: #fff;
+    }
+    .editor-action-bar .act-btn.apply:hover { background: var(--accent-h); }
+    .editor-action-bar .act-btn.apply:disabled { opacity: .5; cursor: not-allowed; }
+    .editor-action-bar .act-btn.download {
+      background: var(--success);
+      color: #fff;
+    }
+    .editor-action-bar .act-btn.download:hover { background: #16a34a; }
+    .editor-action-bar .act-btn.reset {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .editor-action-bar .act-btn.reset:hover {
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    .editor-grid .interact-thumb {
+      min-height: 120px;
+    }
     /* ── Interactive thumbnail grid ──────────────────────────────────── */
     .interact-grid {
       display: grid;
@@ -739,6 +949,16 @@
       margin-left: 8px;
     }
     .divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+  
+    /* ── Version badge ──────────────────────────────────────────────── */
+    .brand-version {
+      font-size: 10px; font-weight: 600; color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px; padding: 1px 8px;
+      letter-spacing: 0.5px; user-select: none;
+      display: inline-block; margin-top: 2px;
+    }
   </style>
 </head>
 <body>
@@ -750,10 +970,15 @@
     <div>
       <div class="brand-name">pdftool</div>
       <div class="brand-sub">Local PDF Toolkit</div>
+          <span class="brand-version" id="app-version"></span>
     </div>
   </div>
   <nav class="nav-list">
-    <button class="nav-item active" data-tool="merge">
+    <button class="nav-item active" data-tool="editor">
+      <span class="nav-icon">&#x270F;&#xFE0F;</span> Editor
+    </button>
+    <hr style="border:none;border-top:1px solid #1e2136;margin:6px 18px">
+    <button class="nav-item" data-tool="merge">
       <span class="nav-icon">&#x1F517;</span> Merge
     </button>
     <button class="nav-item" data-tool="split">
@@ -795,8 +1020,170 @@
 <!-- ════════════════════════════════════════════════════════════ MAIN ══════ -->
 <main id="main">
 
+
+  <!-- ── UNIFIED EDITOR ────────────────────────────────────────────────── -->
+  <section class="tool-section active" id="section-editor">
+
+    <!-- Upload state -->
+    <div id="editor-upload" class="editor-upload">
+      <div class="tool-header" style="justify-content:center">
+        <div class="tool-emoji" style="width:64px;height:64px;font-size:30px">&#x270F;&#xFE0F;</div>
+        <div>
+          <h1 class="tool-title">PDF Editor</h1>
+          <p class="tool-desc">Upload a PDF, then reorder, rotate, split, add page numbers, or watermark &mdash; all in one place.</p>
+        </div>
+      </div>
+      <div class="drop-zone" id="dz-editor" style="margin-top:24px">
+        <input type="file" id="fi-editor" accept=".pdf">
+        <span class="drop-icon">&#x1F4C4;</span>
+        <div class="drop-main">Drop a PDF here or click to browse</div>
+        <div class="drop-hint">Your pages will appear below for editing</div>
+      </div>
+    </div>
+
+    <!-- Workspace state -->
+    <div id="editor-workspace" class="editor-workspace" style="display:none">
+
+      <!-- File bar -->
+      <div class="editor-file-bar">
+        <span>&#x1F4C4;</span>
+        <span class="efb-name" id="ed-filename"></span>
+        <span class="efb-info" id="ed-fileinfo"></span>
+        <button class="efb-btn danger" id="ed-change-file" title="Upload a different file">Change</button>
+      </div>
+
+      <!-- Mode bar -->
+      <div class="editor-mode-bar">
+        <button class="mode-btn active" data-emode="reorder">
+          <span class="mode-icon">&#x1F500;</span> Reorder
+        </button>
+        <button class="mode-btn" data-emode="select">
+          <span class="mode-icon">&#x2702;&#xFE0F;</span> Select
+        </button>
+        <button class="mode-btn" data-emode="rotate">
+          <span class="mode-icon">&#x1F504;</span> Rotate
+        </button>
+        <button class="mode-btn" data-emode="pagenumbers">
+          <span class="mode-icon">#</span> Numbers
+        </button>
+        <button class="mode-btn" data-emode="watermark">
+          <span class="mode-icon">&#x1F4A7;</span> Watermark
+        </button>
+        <button class="mode-btn" data-emode="merge">
+          <span class="mode-icon">&#x1F4CE;</span> Merge
+        </button>
+        <button class="mode-btn" data-emode="compress">
+          <span class="mode-icon">&#x1F4E6;</span> Compress
+        </button>
+      </div>
+
+      <!-- Options panels (one per mode) -->
+      <div class="editor-options-panel active" id="ed-opts-reorder">
+        <div class="opts-row">
+          <button class="tb-btn" id="ed-reverse">Reverse Order</button>
+          <span class="tb-count" id="ed-reorder-count"></span>
+        </div>
+      </div>
+
+      <div class="editor-options-panel" id="ed-opts-select">
+        <div class="opts-row">
+          <button class="tb-btn" id="ed-sel-all">Select All</button>
+          <button class="tb-btn" id="ed-sel-none">Select None</button>
+          <button class="tb-btn" id="ed-sel-invert">Invert</button>
+          <span class="tb-count" id="ed-select-count"></span>
+        </div>
+      </div>
+
+      <div class="editor-options-panel" id="ed-opts-rotate">
+        <div class="opts-row">
+          <label>Angle:</label>
+          <div class="seg" id="ed-rotate-seg" style="flex:0 0 auto">
+            <button class="seg-btn active" data-val="90">90&deg;</button>
+            <button class="seg-btn" data-val="180">180&deg;</button>
+            <button class="seg-btn" data-val="270">270&deg;</button>
+          </div>
+          <button class="tb-btn" id="ed-rot-all">All</button>
+          <button class="tb-btn" id="ed-rot-none">None</button>
+          <span class="tb-count" id="ed-rotate-count"></span>
+        </div>
+      </div>
+
+      <div class="editor-options-panel" id="ed-opts-pagenumbers">
+        <div class="opts-row">
+          <label>Position:</label>
+          <div class="pos-grid" id="ed-pn-pos" style="display:inline-grid;grid-template-columns:repeat(3,28px);gap:4px">
+            <button class="pos-btn" data-pos="top-left" style="padding:4px;font-size:13px">&#x2196;</button>
+            <button class="pos-btn" data-pos="top-center" style="padding:4px;font-size:13px">&#x2191;</button>
+            <button class="pos-btn" data-pos="top-right" style="padding:4px;font-size:13px">&#x2197;</button>
+            <button class="pos-btn" data-pos="bottom-left" style="padding:4px;font-size:13px">&#x2199;</button>
+            <button class="pos-btn active" data-pos="bottom-center" style="padding:4px;font-size:13px">&#x2193;</button>
+            <button class="pos-btn" data-pos="bottom-right" style="padding:4px;font-size:13px">&#x2198;</button>
+          </div>
+          <label>Format:</label>
+          <input type="text" id="ed-pn-format" value="{n}" style="width:120px;padding:6px 10px">
+          <label>Start:</label>
+          <input type="number" id="ed-pn-start" value="1" min="0" style="width:60px;padding:6px 10px">
+          <label>Size:</label>
+          <input type="number" id="ed-pn-fontsize" value="12" min="4" max="72" style="width:60px;padding:6px 10px">
+          <span class="tb-count" id="ed-pn-count"></span>
+        </div>
+      </div>
+
+      <div class="editor-options-panel" id="ed-opts-watermark">
+        <div class="opts-row">
+          <input type="text" id="ed-wm-text" placeholder="Watermark text" style="flex:1;padding:6px 10px">
+          <input type="color" id="ed-wm-color" value="#FF0000" style="width:36px;height:32px">
+          <label>Size: <span id="ed-wm-fs-val">60</span></label>
+          <input type="range" id="ed-wm-fontsize" min="10" max="200" value="60" style="width:80px">
+          <label>Opacity: <span id="ed-wm-op-val">0.30</span></label>
+          <input type="range" id="ed-wm-opacity" min="1" max="100" value="30" style="width:80px">
+          <label>Angle: <span id="ed-wm-ang-val">45</span>&deg;</label>
+          <input type="range" id="ed-wm-angle" min="0" max="360" value="45" style="width:80px">
+        </div>
+      </div>
+
+      <div class="editor-options-panel" id="ed-opts-merge">
+        <div class="opts-row" style="flex-wrap:wrap;gap:8px">
+          <label style="font-weight:600">Add PDFs to merge with current document:</label>
+          <label class="tb-btn" style="cursor:pointer">
+            <input type="file" id="ed-merge-files" accept=".pdf" multiple style="display:none"> + Add Files
+          </label>
+          <span class="tb-count" id="ed-merge-count">0 files to merge</span>
+        </div>
+        <div class="ed-merge-list" id="ed-merge-list"></div>
+      </div>
+
+      <div class="editor-options-panel" id="ed-opts-compress">
+        <div class="opts-row">
+          <label>Quality:</label>
+          <div class="seg" id="ed-compress-seg" style="flex:0 0 auto">
+            <button class="seg-btn" data-val="low">Low</button>
+            <button class="seg-btn active" data-val="medium">Medium</button>
+            <button class="seg-btn" data-val="high">High</button>
+          </div>
+          <span style="color:var(--muted);font-size:12px">Lower quality = smaller file size</span>
+        </div>
+      </div>
+
+      <!-- Hint -->
+      <div class="editor-hint" id="ed-hint">Drag pages to reorder them</div>
+
+      <!-- The grid -->
+      <div class="editor-grid" id="editor-grid"></div>
+
+      <!-- Action bar -->
+      <div class="editor-action-bar">
+        <button class="act-btn apply" id="ed-apply"><span class="mode-icon">&#x2699;&#xFE0F;</span> Apply</button>
+        <button class="act-btn download" id="ed-download" style="display:none"><span>&#x2B07;</span> Download</button>
+        <button class="act-btn reset" id="ed-reset" style="display:none">Reset</button>
+        <div class="progress-bar" id="ed-progress" style="position:absolute;bottom:0;left:0;right:0;border-radius:0 0 12px 12px"><div class="progress-fill"></div></div>
+      </div>
+
+    </div>
+  </section>
+
   <!-- ── MERGE ──────────────────────────────────────────────────────────── -->
-  <section class="tool-section active" id="section-merge">
+  <section class="tool-section" id="section-merge">
     <div class="tool-header">
       <div class="tool-emoji">&#x1F517;</div>
       <div>
@@ -2015,7 +2402,7 @@ async function submit(tool, buildFd, downloadName) {
       xhr.addEventListener('error', () => reject(new Error('Network error')));
       xhr.addEventListener('timeout', () => reject(new Error('Request timed out')));
 
-      xhr.send(fd);
+      xhr.send(fd._isMerge ? fd._mergeFd : fd);
     });
 
     showResult(tool, result.ok, result.msg, result.name, result.blob);
@@ -2679,6 +3066,602 @@ function triggerLivePreview(toolId) {
   };
   if (builders[toolId]) builders[toolId]();
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Unified Editor
+══════════════════════════════════════════════════════════════════════════ */
+const ed = {
+  file: null,
+  blob: null,           // latest result blob (for chaining / download)
+  previewData: null,
+  mode: 'reorder',
+  // Per-mode state
+  order: [],            // reorder: [{page, data}, ...]
+  selected: new Set(),  // select: pages to keep
+  rotated: new Set(),   // rotate: pages to rotate
+  pnSkipped: new Set(), // pagenumbers: pages to skip
+};
+
+const ED_MODES = ['reorder','select','rotate','pagenumbers','watermark'];
+const ED_HINTS = {
+  reorder: 'Drag pages to reorder them',
+  select: 'Click pages to include or exclude them (for split/extract)',
+  rotate: 'Click pages to toggle rotation',
+  pagenumbers: 'Click pages to skip numbering',
+  watermark: 'Set watermark text above — preview updates live',
+  merge: 'Add PDFs above to merge with the current document',
+  compress: 'Choose quality level and apply to compress the PDF',
+};
+
+/* ── Upload & file management ────────────────────────────────────────── */
+const edDz = document.getElementById('dz-editor');
+const edFi = document.getElementById('fi-editor');
+
+function edSetFile(file) {
+  if (!file) return;
+  ed.file = file;
+  ed.blob = null;
+  document.getElementById('ed-filename').textContent = file.name;
+  document.getElementById('ed-fileinfo').textContent = fmtBytes(file.size);
+  document.getElementById('editor-upload').style.display = 'none';
+  document.getElementById('editor-workspace').style.display = '';
+  document.getElementById('ed-download').style.display = 'none';
+  document.getElementById('ed-reset').style.display = 'none';
+
+  // Fetch preview
+  document.getElementById('editor-grid').innerHTML = '<div class="preview-loading" style="grid-column:1/-1"><span class="spinner-sm"></span> Loading pages...</div>';
+  fetchPreview(file).then(data => {
+    ed.previewData = data;
+    edInitState();
+    edRenderGrid();
+
+    // Also share with other tools
+    sharedFile = file;
+    sharedPreviewData = data;
+  });
+}
+
+function edClearFile() {
+  ed.file = null;
+  ed.blob = null;
+  ed.previewData = null;
+  document.getElementById('editor-upload').style.display = '';
+  document.getElementById('editor-workspace').style.display = 'none';
+  // Restore drop zone
+  edDz.classList.remove('has-file');
+  edDz.innerHTML = `<input type="file" id="fi-editor" accept=".pdf">
+    <span class="drop-icon">\u{1F4C4}</span>
+    <div class="drop-main">Drop a PDF here or click to browse</div>
+    <div class="drop-hint">Your pages will appear below for editing</div>`;
+  const newFi = document.getElementById('fi-editor');
+  newFi.addEventListener('change', () => { if (newFi.files[0]) edSetFile(newFi.files[0]); });
+}
+
+edFi.addEventListener('change', () => { if (edFi.files[0]) edSetFile(edFi.files[0]); });
+edDz.addEventListener('dragover', e => { e.preventDefault(); edDz.classList.add('over'); });
+edDz.addEventListener('dragleave', () => edDz.classList.remove('over'));
+edDz.addEventListener('drop', e => {
+  e.preventDefault(); edDz.classList.remove('over');
+  if (e.dataTransfer.files[0]) edSetFile(e.dataTransfer.files[0]);
+});
+document.getElementById('ed-change-file').addEventListener('click', edClearFile);
+
+/* ── Mode switching ──────────────────────────────────────────────────── */
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    ed.mode = btn.dataset.emode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.editor-options-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(`ed-opts-${ed.mode}`).classList.add('active');
+    document.getElementById('ed-hint').textContent = ED_HINTS[ed.mode] || '';
+    edRenderGrid();
+  });
+});
+
+// Init editor seg controls
+document.querySelectorAll('#ed-rotate-seg .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#ed-rotate-seg .seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (ed.mode === 'rotate') edRenderGrid();
+  });
+});
+document.querySelectorAll('#ed-pn-pos .pos-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#ed-pn-pos .pos-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (ed.mode === 'pagenumbers') edRenderGrid();
+  });
+});
+['ed-pn-format','ed-pn-start','ed-pn-fontsize'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { if (ed.mode === 'pagenumbers') edRenderGrid(); });
+});
+['ed-wm-text'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { if (ed.mode === 'watermark') edRenderGrid(); });
+});
+['ed-wm-fontsize','ed-wm-opacity','ed-wm-angle'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => {
+    if (id === 'ed-wm-fontsize') document.getElementById('ed-wm-fs-val').textContent = el.value;
+    if (id === 'ed-wm-opacity') document.getElementById('ed-wm-op-val').textContent = (el.value / 100).toFixed(2);
+    if (id === 'ed-wm-angle') document.getElementById('ed-wm-ang-val').textContent = el.value;
+    if (ed.mode === 'watermark') edRenderGrid();
+  });
+});
+document.getElementById('ed-wm-color').addEventListener('input', () => { if (ed.mode === 'watermark') edRenderGrid(); });
+
+/* ── State init ──────────────────────────────────────────────────────── */
+function edInitState() {
+  const d = ed.previewData;
+  if (!d) return;
+  // Build order array
+  ed.order = [];
+  for (const p of d.pages) ed.order.push({ page: p.page, data: p.data });
+  for (let i = d.pages.length + 1; i <= d.total_pages; i++) ed.order.push({ page: i, data: null });
+  // Select all
+  ed.selected = new Set();
+  for (let i = 1; i <= d.total_pages; i++) ed.selected.add(i);
+  // Rotate all
+  ed.rotated = new Set();
+  for (let i = 1; i <= d.total_pages; i++) ed.rotated.add(i);
+  // Page numbers: none skipped
+  ed.pnSkipped = new Set();
+  // Merge: extra files
+  if (!ed.mergeFiles) ed.mergeFiles = [];
+  if (!ed.mergePreviews) ed.mergePreviews = [];
+}
+
+/* ── Grid rendering ──────────────────────────────────────────────────── */
+let edDragSrc = null;
+
+function edRenderGrid() {
+  const grid = document.getElementById('editor-grid');
+  const d = ed.previewData;
+  if (!d) return;
+  grid.innerHTML = '';
+
+  if (ed.mode === 'reorder') edRenderReorder(grid);
+  else if (ed.mode === 'select') edRenderSelect(grid);
+  else if (ed.mode === 'rotate') edRenderRotate(grid);
+  else if (ed.mode === 'pagenumbers') edRenderPageNumbers(grid);
+  else if (ed.mode === 'watermark') edRenderWatermark(grid);
+  else if (ed.mode === 'merge') edRenderMerge(grid);
+  else if (ed.mode === 'compress') edRenderCompress(grid);
+}
+
+function edCrossSvg() {
+  return `<svg class="cross-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%">
+    <line x1="10" y1="10" x2="90" y2="90"/><line x1="90" y1="10" x2="10" y2="90"/>
+  </svg>`;
+}
+
+function edThumbImg(p) {
+  if (p.data) return `<img src="${p.data}" alt="Page ${p.page}">`;
+  return `<div style="min-height:120px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--muted)">Page ${p.page}</div>`;
+}
+
+/* ── Reorder mode ────────────────────────────────────────────────────── */
+function edRenderReorder(grid) {
+  ed.order.forEach((p, idx) => {
+    const el = document.createElement('div');
+    el.className = 'interact-thumb selected';
+    el.draggable = true;
+    el.dataset.idx = idx;
+    el.innerHTML = `${edThumbImg(p)}<div class="thumb-badge">${idx + 1}</div><div class="thumb-label">Page ${p.page}</div>`;
+
+    el.addEventListener('dragstart', e => { edDragSrc = idx; el.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+    el.addEventListener('dragend', () => { el.classList.remove('dragging'); grid.querySelectorAll('.interact-thumb').forEach(t => t.classList.remove('drag-over')); edDragSrc = null; });
+    el.addEventListener('dragover', e => { e.preventDefault(); if (edDragSrc !== null && edDragSrc !== idx) el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault(); el.classList.remove('drag-over');
+      if (edDragSrc === null || edDragSrc === idx) return;
+      const item = ed.order.splice(edDragSrc, 1)[0];
+      ed.order.splice(idx, 0, item);
+      edDragSrc = null;
+      edRenderGrid();
+    });
+    grid.appendChild(el);
+  });
+  document.getElementById('ed-reorder-count').textContent = `${ed.order.length} pages`;
+}
+
+document.getElementById('ed-reverse').addEventListener('click', () => { ed.order.reverse(); edRenderGrid(); });
+
+/* ── Select mode ─────────────────────────────────────────────────────── */
+function edRenderSelect(grid) {
+  const d = ed.previewData;
+  const allPages = ed.order.length > 0 ? ed.order : d.pages;
+  for (const p of allPages) {
+    const sel = ed.selected.has(p.page);
+    const el = document.createElement('div');
+    el.className = `interact-thumb${sel ? ' selected' : ' excluded'}`;
+    el.innerHTML = `${edThumbImg(p)}${edCrossSvg()}<div class="thumb-label">${p.page}</div>`;
+    el.addEventListener('click', () => {
+      if (ed.selected.has(p.page)) ed.selected.delete(p.page);
+      else ed.selected.add(p.page);
+      edRenderGrid();
+    });
+    grid.appendChild(el);
+  }
+  document.getElementById('ed-select-count').textContent = `${ed.selected.size} of ${allPages.length} selected`;
+}
+
+document.getElementById('ed-sel-all').addEventListener('click', () => {
+  for (const p of ed.order) ed.selected.add(p.page);
+  edRenderGrid();
+});
+document.getElementById('ed-sel-none').addEventListener('click', () => { ed.selected.clear(); edRenderGrid(); });
+document.getElementById('ed-sel-invert').addEventListener('click', () => {
+  for (const p of ed.order) {
+    if (ed.selected.has(p.page)) ed.selected.delete(p.page);
+    else ed.selected.add(p.page);
+  }
+  edRenderGrid();
+});
+
+/* ── Rotate mode ─────────────────────────────────────────────────────── */
+function edRenderRotate(grid) {
+  const degrees = document.querySelector('#ed-rotate-seg .seg-btn.active')?.dataset.val || '90';
+  for (const p of ed.order) {
+    const sel = ed.rotated.has(p.page);
+    const el = document.createElement('div');
+    el.className = `interact-thumb${sel ? ' selected' : ''}`;
+    const rotStyle = sel ? ` rotated-${degrees}` : '';
+    el.innerHTML = `<div class="preview-thumb${rotStyle}" style="border:none;border-radius:0">${edThumbImg(p)}</div>${sel ? `<div class="rotate-indicator">\u21bb ${degrees}\u00b0</div>` : ''}<div class="thumb-label">${p.page}</div>`;
+    el.addEventListener('click', () => {
+      if (ed.rotated.has(p.page)) ed.rotated.delete(p.page);
+      else ed.rotated.add(p.page);
+      edRenderGrid();
+    });
+    grid.appendChild(el);
+  }
+  document.getElementById('ed-rotate-count').textContent = `${ed.rotated.size} selected`;
+}
+
+document.getElementById('ed-rot-all').addEventListener('click', () => {
+  for (const p of ed.order) ed.rotated.add(p.page);
+  edRenderGrid();
+});
+document.getElementById('ed-rot-none').addEventListener('click', () => { ed.rotated.clear(); edRenderGrid(); });
+
+/* ── Page Numbers mode ───────────────────────────────────────────────── */
+function edRenderPageNumbers(grid) {
+  const pos = document.querySelector('#ed-pn-pos .pos-btn.active')?.dataset.pos || 'bottom-center';
+  const fmt = document.getElementById('ed-pn-format').value || '{n}';
+  const start = parseInt(document.getElementById('ed-pn-start').value) || 1;
+  const fontSize = parseFloat(document.getElementById('ed-pn-fontsize').value) || 12;
+  const posStyles = {
+    'top-left':'top:28px;left:6px;','top-center':'top:28px;left:50%;transform:translateX(-50%);','top-right':'top:28px;right:6px;',
+    'bottom-left':'bottom:28px;left:6px;','bottom-center':'bottom:28px;left:50%;transform:translateX(-50%);','bottom-right':'bottom:28px;right:6px;',
+  };
+  let counter = start;
+  for (const p of ed.order) {
+    const skip = ed.pnSkipped.has(p.page);
+    const label = skip ? '' : fmt.replace(/\{n\}/g, counter).replace(/\{total\}/g, ed.order.length);
+    if (!skip) counter++;
+    const overlaySize = Math.max(9, Math.min(fontSize * 0.7, 18));
+    const el = document.createElement('div');
+    el.className = `interact-thumb${skip ? ' excluded' : ' selected'}`;
+    el.style.position = 'relative';
+    el.innerHTML = `${edThumbImg(p)}${edCrossSvg()}${skip ? '<div class="skip-overlay">SKIP</div>' : `<div class="page-overlay" style="${posStyles[pos] || posStyles['bottom-center']}font-size:${overlaySize}px;">${label}</div>`}<div class="thumb-label">${p.page}</div>`;
+    el.addEventListener('click', () => {
+      if (ed.pnSkipped.has(p.page)) ed.pnSkipped.delete(p.page);
+      else ed.pnSkipped.add(p.page);
+      edRenderGrid();
+    });
+    grid.appendChild(el);
+  }
+  const numbered = ed.order.length - ed.pnSkipped.size;
+  document.getElementById('ed-pn-count').textContent = `${numbered} numbered` + (ed.pnSkipped.size > 0 ? `, ${ed.pnSkipped.size} skipped` : '');
+}
+
+/* ── Watermark mode ──────────────────────────────────────────────────── */
+function edRenderWatermark(grid) {
+  const text = document.getElementById('ed-wm-text').value.trim();
+  const color = document.getElementById('ed-wm-color').value || '#FF0000';
+  const opacity = (parseInt(document.getElementById('ed-wm-opacity').value) || 30) / 100;
+  const angle = parseInt(document.getElementById('ed-wm-angle').value) || 45;
+  const fontSize = parseInt(document.getElementById('ed-wm-fontsize').value) || 60;
+  const overlaySize = Math.max(10, Math.min(fontSize * 0.35, 28));
+
+  for (const p of ed.order) {
+    const el = document.createElement('div');
+    el.className = 'interact-thumb';
+    el.style.cssText = 'position:relative;cursor:default';
+    const overlay = text ? `<div class="wm-overlay" style="color:${color};opacity:${opacity};font-size:${overlaySize}px;--wm-angle:${angle}deg">${text}</div>` : '';
+    el.innerHTML = `${edThumbImg(p)}${overlay}<div class="thumb-label">${p.page}</div>`;
+    grid.appendChild(el);
+  }
+}
+
+/* ── Merge mode ───────────────────────────────────────────────────────── */
+if (!ed.mergeFiles) ed.mergeFiles = [];
+if (!ed.mergePreviews) ed.mergePreviews = [];
+
+function edRenderMerge(grid) {
+  // Show current document pages
+  for (const p of ed.order) {
+    const el = document.createElement('div');
+    el.className = 'interact-thumb selected';
+    el.style.cursor = 'default';
+    el.innerHTML = `${edThumbImg(p)}<div class="thumb-badge" style="background:var(--accent)">${p.page}</div><div class="thumb-label">Current doc</div>`;
+    grid.appendChild(el);
+  }
+
+  // Show pages from merge files
+  for (let fi = 0; fi < ed.mergePreviews.length; fi++) {
+    const mpd = ed.mergePreviews[fi];
+    if (!mpd) continue;
+    for (const pg of mpd.pages) {
+      const el = document.createElement('div');
+      el.className = 'interact-thumb selected';
+      el.style.cursor = 'default';
+      el.innerHTML = `${edThumbImg(pg)}<div class="thumb-badge" style="background:#16a34a">${pg.page}</div><div class="thumb-label">${ed.mergeFiles[fi].name}</div>`;
+      grid.appendChild(el);
+    }
+    // Show remaining pages (no preview data)
+    for (let pp = mpd.pages.length + 1; pp <= mpd.total_pages; pp++) {
+      const el = document.createElement('div');
+      el.className = 'interact-thumb selected';
+      el.style.cursor = 'default';
+      el.innerHTML = `<div style="min-height:120px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--muted)">Page ${pp}</div><div class="thumb-badge" style="background:#16a34a">${pp}</div><div class="thumb-label">${ed.mergeFiles[fi].name}</div>`;
+      grid.appendChild(el);
+    }
+  }
+}
+
+function edRenderMergeList() {
+  const list = document.getElementById('ed-merge-list');
+  list.innerHTML = '';
+  ed.mergeFiles.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'ed-merge-item';
+    item.innerHTML = `
+      <span class="ed-merge-order">&#x2630;</span>
+      <span class="emi-name">${f.name}</span>
+      <span class="emi-size">${fmtBytes(f.size)}</span>
+      <button class="emi-remove" title="Remove">&times;</button>`;
+    item.querySelector('.emi-remove').addEventListener('click', () => {
+      ed.mergeFiles.splice(i, 1);
+      ed.mergePreviews.splice(i, 1);
+      edRenderMergeList();
+      if (ed.mode === 'merge') edRenderGrid();
+    });
+    // Drag reorder within merge list
+    item.draggable = true;
+    item.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', i); item.style.opacity = '0.5'; });
+    item.addEventListener('dragend', () => { item.style.opacity = '1'; });
+    item.addEventListener('dragover', e => { e.preventDefault(); item.style.borderColor = 'var(--accent)'; });
+    item.addEventListener('dragleave', () => { item.style.borderColor = 'var(--border)'; });
+    item.addEventListener('drop', e => {
+      e.preventDefault(); item.style.borderColor = 'var(--border)';
+      const from = parseInt(e.dataTransfer.getData('text/plain'));
+      if (from === i) return;
+      const [movedFile] = ed.mergeFiles.splice(from, 1);
+      const [movedPrev] = ed.mergePreviews.splice(from, 1);
+      ed.mergeFiles.splice(i, 0, movedFile);
+      ed.mergePreviews.splice(i, 0, movedPrev);
+      edRenderMergeList();
+      if (ed.mode === 'merge') edRenderGrid();
+    });
+    list.appendChild(item);
+  });
+  document.getElementById('ed-merge-count').textContent = `${ed.mergeFiles.length} file${ed.mergeFiles.length !== 1 ? 's' : ''} to merge`;
+}
+
+document.getElementById('ed-merge-files').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  for (const f of files) {
+    ed.mergeFiles.push(f);
+    ed.mergePreviews.push(null);
+    const idx = ed.mergeFiles.length - 1;
+    // Fetch preview in background
+    fetchPreview(f).then(data => {
+      ed.mergePreviews[idx] = data;
+      if (ed.mode === 'merge') edRenderGrid();
+    });
+  }
+  edRenderMergeList();
+  if (ed.mode === 'merge') edRenderGrid();
+  e.target.value = '';
+});
+
+/* ── Compress mode ───────────────────────────────────────────────────── */
+function edRenderCompress(grid) {
+  for (const p of ed.order) {
+    const el = document.createElement('div');
+    el.className = 'interact-thumb selected';
+    el.style.cursor = 'default';
+    el.innerHTML = `${edThumbImg(p)}<div class="thumb-label">${p.page}</div>`;
+    grid.appendChild(el);
+  }
+}
+
+// Init compress seg
+(function() {
+  const seg = document.getElementById('ed-compress-seg');
+  if (!seg) return;
+  seg.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      seg.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+})();
+
+/* ── Apply action ────────────────────────────────────────────────────── */
+document.getElementById('ed-apply').addEventListener('click', async () => {
+  const sourceFile = ed.blob ? new File([ed.blob], ed.file.name, { type: 'application/pdf' }) : ed.file;
+  const fd = new FormData();
+  fd.append('file', sourceFile);
+
+  let endpoint = '';
+  let downloadName = editName(ed.file, 'output_edit.pdf');
+
+  if (ed.mode === 'reorder') {
+    const pages = ed.order.map(p => p.page).join(',');
+    if (!pages) { toast('No pages to reorder', 'err'); return; }
+    fd.append('pages', pages);
+    endpoint = 'reorder';
+  } else if (ed.mode === 'select') {
+    const pages = [...ed.selected].sort((a, b) => a - b).join(',');
+    if (!pages) { toast('Select at least one page', 'err'); return; }
+    fd.append('pages', pages);
+    endpoint = 'split';
+  } else if (ed.mode === 'rotate') {
+    if (ed.rotated.size === 0) { toast('Select pages to rotate', 'err'); return; }
+    const degrees = document.querySelector('#ed-rotate-seg .seg-btn.active')?.dataset.val || '90';
+    fd.append('degrees', degrees);
+    if (ed.rotated.size < ed.order.length) {
+      fd.append('pages', [...ed.rotated].sort((a, b) => a - b).join(','));
+    }
+    endpoint = 'rotate';
+  } else if (ed.mode === 'pagenumbers') {
+    const pos = document.querySelector('#ed-pn-pos .pos-btn.active')?.dataset.pos || 'bottom-center';
+    fd.append('position', pos);
+    fd.append('format', document.getElementById('ed-pn-format').value || '{n}');
+    fd.append('start', document.getElementById('ed-pn-start').value || '1');
+    fd.append('font_size', document.getElementById('ed-pn-fontsize').value || '12');
+    fd.append('margin', '36');
+    if (ed.pnSkipped.size > 0) fd.append('skip', [...ed.pnSkipped].sort((a, b) => a - b).join(','));
+    endpoint = 'pagenumbers';
+  } else if (ed.mode === 'watermark') {
+    const text = document.getElementById('ed-wm-text').value.trim();
+    if (!text) { toast('Enter watermark text', 'err'); return; }
+    fd.append('text', text);
+    fd.append('color', document.getElementById('ed-wm-color').value);
+    fd.append('font_size', document.getElementById('ed-wm-fontsize').value);
+    fd.append('opacity', (parseInt(document.getElementById('ed-wm-opacity').value) / 100).toFixed(2));
+    fd.append('angle', document.getElementById('ed-wm-angle').value);
+    endpoint = 'watermark';
+  }
+
+  else if (ed.mode === 'merge') {
+    // For merge, we need multiple files
+    // Remove the single file we already appended
+    const mergeFd = new FormData();
+    const sourceFile2 = ed.blob ? new File([ed.blob], ed.file.name, { type: 'application/pdf' }) : ed.file;
+    mergeFd.append('files', sourceFile2);
+    for (const mf of ed.mergeFiles) mergeFd.append('files', mf);
+    if (ed.mergeFiles.length === 0) { toast('Add at least one PDF to merge', 'err'); return; }
+    // Replace fd reference - we need to use mergeFd instead
+    endpoint = 'merge';
+    // Swap fd
+    fd._isMerge = true;
+    fd._mergeFd = mergeFd;
+  } else if (ed.mode === 'compress') {
+    const quality = document.querySelector('#ed-compress-seg .seg-btn.active')?.dataset.val || 'medium';
+    fd.append('quality', quality);
+    endpoint = 'compress';
+  }
+
+  if (!endpoint) return;
+
+  const btn = document.getElementById('ed-apply');
+  const prog = document.getElementById('ed-progress');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Processing...';
+  prog.classList.add('active', 'indeterminate');
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `api/${endpoint}`);
+      xhr.responseType = 'blob';
+      xhr.upload.addEventListener('progress', e => {
+        if (e.lengthComputable) {
+          prog.classList.remove('indeterminate');
+          prog.querySelector('.progress-fill').style.width = Math.round(e.loaded / e.total * 100) + '%';
+        }
+      });
+      xhr.upload.addEventListener('loadend', () => prog.classList.add('indeterminate'));
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve({ ok: true, blob: xhr.response });
+        } else {
+          const reader = new FileReader();
+          reader.onload = () => {
+            try { resolve({ ok: false, msg: JSON.parse(reader.result).error }); }
+            catch { resolve({ ok: false, msg: 'Server error' }); }
+          };
+          reader.readAsText(xhr.response);
+        }
+      });
+      xhr.addEventListener('error', () => reject(new Error('Network error')));
+      xhr.send(fd._isMerge ? fd._mergeFd : fd);
+    });
+
+    if (result.ok) {
+      ed.blob = result.blob;
+      toast(`${ed.mode} applied successfully`, 'ok');
+      // Clear merge files after successful merge
+      if (ed.mode === 'merge') {
+        ed.mergeFiles = [];
+        ed.mergePreviews = [];
+        edRenderMergeList();
+      }
+      // Show download + reset buttons
+      document.getElementById('ed-download').style.display = '';
+      document.getElementById('ed-reset').style.display = '';
+      // Update file info
+      document.getElementById('ed-fileinfo').textContent = fmtBytes(result.blob.size) + ' (edited)';
+      // Re-fetch preview of result
+      const previewFd = new FormData();
+      previewFd.append('file', new File([result.blob], 'result.pdf', { type: 'application/pdf' }));
+      previewFd.append('max_pages', '20');
+      const prevRes = await fetch('api/preview', { method: 'POST', body: previewFd });
+      if (prevRes.ok) {
+        const data = await prevRes.json();
+        ed.previewData = data;
+        edInitState();
+        edRenderGrid();
+      }
+    } else {
+      toast(result.msg || 'Operation failed', 'err');
+    }
+  } catch (e) {
+    toast('Error: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="mode-icon">\u2699\uFE0F</span> Apply';
+    prog.classList.remove('active', 'indeterminate');
+    prog.querySelector('.progress-fill').style.width = '0%';
+  }
+});
+
+/* ── Download ────────────────────────────────────────────────────────── */
+document.getElementById('ed-download').addEventListener('click', () => {
+  if (!ed.blob) return;
+  const url = URL.createObjectURL(ed.blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = editName(ed.file, 'output_edit.pdf');
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+});
+
+/* ── Reset (back to original) ────────────────────────────────────────── */
+document.getElementById('ed-reset').addEventListener('click', () => {
+  if (!ed.file) return;
+  ed.blob = null;
+  document.getElementById('ed-download').style.display = 'none';
+  document.getElementById('ed-reset').style.display = 'none';
+  document.getElementById('ed-fileinfo').textContent = fmtBytes(ed.file.size);
+  // Re-fetch original preview
+  document.getElementById('editor-grid').innerHTML = '<div class="preview-loading" style="grid-column:1/-1"><span class="spinner-sm"></span> Reloading original...</div>';
+  fetchPreview(ed.file).then(data => {
+    ed.previewData = data;
+    edInitState();
+    edRenderGrid();
+    toast('Reset to original', 'ok');
+  });
+});
+
+  // Version display
+  document.getElementById('app-version').textContent = 'v3.8.0';
 </script>
 </body>
 </html>
