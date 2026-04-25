@@ -194,40 +194,42 @@
 
     /* ── PDF Preview strip ────────────────────────────────────────────── */
     .preview-strip {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
       padding: 14px 0 6px;
+      max-height: 520px;
+      overflow-y: auto;
       scroll-behavior: smooth;
     }
-    .preview-strip::-webkit-scrollbar { height: 6px; }
+    .preview-strip::-webkit-scrollbar { width: 5px; }
     .preview-strip::-webkit-scrollbar-track { background: transparent; }
     .preview-strip::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
     .preview-thumb {
-      flex-shrink: 0;
       position: relative;
       border: 2px solid var(--border);
-      border-radius: 6px;
+      border-radius: 8px;
       overflow: hidden;
       transition: border-color .15s, box-shadow .15s;
       cursor: default;
+      background: #f8f9fb;
     }
     .preview-thumb:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(91,106,240,.15); }
     .preview-thumb img {
       display: block;
-      height: 120px;
-      width: auto;
+      width: 100%;
+      height: auto;
     }
     .preview-thumb-label {
       position: absolute;
       bottom: 0; left: 0; right: 0;
       background: rgba(0,0,0,.6);
       color: #fff;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       text-align: center;
-      padding: 2px 0;
+      padding: 3px 0;
     }
     .preview-loading {
       display: flex; align-items: center; gap: 8px;
@@ -236,17 +238,15 @@
       font-size: 13px;
     }
     .preview-more {
-      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 60px;
-      height: 120px;
+      min-height: 160px;
       background: var(--bg);
       border: 2px dashed var(--border);
-      border-radius: 6px;
+      border-radius: 8px;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       text-align: center;
       line-height: 1.3;
@@ -412,8 +412,24 @@
     .result-card.show-err .result-msg { margin-bottom: 0; }
 
     /* ── Result preview strip ────────────────────────────────────────── */
-    .result-preview { margin-top: 12px; }
-    .result-preview .preview-strip { padding-top: 8px; }
+    .result-preview { margin-top: 16px; }
+    .result-preview-header {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .5px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .result-preview .preview-strip { padding-top: 4px; max-height: 400px; }
+    .result-preview .preview-thumb { background: #fff; }
+    .result-preview .preview-thumb.changed {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 2px 8px rgba(91,106,240,.12);
+    }
+    .result-preview .preview-thumb.changed .preview-thumb-label {
+      background: var(--accent);
+    }
 
     /* ── Spinner ──────────────────────────────────────────────────────── */
     .spinner {
@@ -567,6 +583,7 @@
         <div class="result-title"></div>
         <div class="result-msg"></div>
         <div class="result-dl"></div>
+        <div class="result-preview" id="res-preview-merge"></div>
       </div>
     </div></div>
   </section>
@@ -611,6 +628,7 @@
         <div class="result-title"></div>
         <div class="result-msg"></div>
         <div class="result-dl"></div>
+        <div class="result-preview" id="res-preview-split"></div>
       </div>
     </div></div>
   </section>
@@ -664,6 +682,7 @@
         <div class="result-title"></div>
         <div class="result-msg"></div>
         <div class="result-dl"></div>
+        <div class="result-preview" id="res-preview-rotate"></div>
       </div>
     </div></div>
   </section>
@@ -737,6 +756,7 @@
         <div class="result-title"></div>
         <div class="result-msg"></div>
         <div class="result-dl"></div>
+        <div class="result-preview" id="res-preview-pagenumbers"></div>
       </div>
     </div></div>
   </section>
@@ -781,6 +801,7 @@
         <div class="result-title"></div>
         <div class="result-msg"></div>
         <div class="result-dl"></div>
+        <div class="result-preview" id="res-preview-reorder"></div>
       </div>
     </div></div>
   </section>
@@ -939,6 +960,7 @@
         <div class="result-title"></div>
         <div class="result-msg"></div>
         <div class="result-dl"></div>
+        <div class="result-preview" id="res-preview-watermark"></div>
       </div>
     </div></div>
   </section>
@@ -1553,6 +1575,8 @@ function setLoading(tool, on) {
   }
 }
 
+const PREVIEW_TOOLS = new Set(['merge','split','rotate','pagenumbers','reorder','watermark']);
+
 function showResult(tool, ok, msg, filename, blob) {
   const card = document.getElementById(`res-${tool}`);
   const inner = card.querySelector('.result-inner');
@@ -1562,17 +1586,58 @@ function showResult(tool, ok, msg, filename, blob) {
   inner.querySelector('.result-msg').textContent   = msg;
 
   const dlDiv = inner.querySelector('.result-dl');
+  const previewDiv = document.getElementById(`res-preview-${tool}`);
+  if (previewDiv) previewDiv.innerHTML = '';
+
   if (ok && blob) {
     const url = URL.createObjectURL(blob);
     dlDiv.innerHTML = `<a class="btn-dl" href="${url}" download="${filename}">\u2B07 Download ${filename}</a>`;
     const a = document.createElement('a');
     a.href = url; a.download = filename; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+    // Show result preview for PDF tools
+    if (previewDiv && PREVIEW_TOOLS.has(tool) && blob.type === 'application/pdf') {
+      showResultPreview(tool, blob);
+    }
   } else {
     dlDiv.innerHTML = '';
   }
 
   card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function showResultPreview(tool, blob) {
+  const container = document.getElementById(`res-preview-${tool}`);
+  if (!container) return;
+
+  container.innerHTML = '<div class="result-preview-header">Result Preview</div><div class="preview-loading"><span class="spinner-sm"></span> Generating preview...</div>';
+
+  const fd = new FormData();
+  fd.append('file', new File([blob], 'result.pdf', { type: 'application/pdf' }));
+  fd.append('max_pages', '20');
+
+  try {
+    const res = await fetch('api/preview', { method: 'POST', body: fd });
+    if (!res.ok) { container.innerHTML = ''; return; }
+    const data = await res.json();
+    if (!data || !data.pages || data.pages.length === 0) { container.innerHTML = ''; return; }
+
+    let html = '<div class="result-preview-header">Result Preview</div><div class="preview-strip">';
+    for (const p of data.pages) {
+      html += `<div class="preview-thumb changed">
+        <img src="${p.data}" alt="Page ${p.page}">
+        <div class="preview-thumb-label">${p.page}</div>
+      </div>`;
+    }
+    if (data.total_pages > data.pages.length) {
+      html += `<div class="preview-more">+${data.total_pages - data.pages.length}<br>more</div>`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  } catch {
+    container.innerHTML = '';
+  }
 }
 
 async function submit(tool, buildFd, downloadName) {
