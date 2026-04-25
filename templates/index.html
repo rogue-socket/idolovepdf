@@ -1273,6 +1273,13 @@ function fmtBytes(n) {
   return (n / 1048576).toFixed(1) + ' MB';
 }
 
+function editName(file, fallback) {
+  if (!file || !file.name) return fallback || 'output_edit.pdf';
+  const base = file.name.replace(/\.pdf$/i, '');
+  const ext = file.name.toLowerCase().endsWith('.pdf') ? '.pdf' : '';
+  return base + '_edit' + ext;
+}
+
 function toast(msg, type = 'ok') {
   const el = document.createElement('div');
   el.className = `toast ${type}`;
@@ -1718,7 +1725,7 @@ document.getElementById('btn-merge').addEventListener('click', () => {
     const fd = new FormData();
     files.forEach(f => fd.append('files', f));
     return fd;
-  }, 'merged.pdf');
+  }, editName(flMerge.getFiles()[0], 'merged_edit.pdf'));
 });
 
 // SPLIT
@@ -1732,7 +1739,7 @@ document.getElementById('btn-split').addEventListener('click', () => {
     fd.append('file', file);
     fd.append('pages', pages);
     return fd;
-  }, 'split.pdf');
+  }, editName(currentFiles['split'], 'split_edit.pdf'));
 });
 
 // ROTATE
@@ -1746,7 +1753,7 @@ document.getElementById('btn-rotate').addEventListener('click', () => {
     const pages = document.getElementById('rotate-pages').value.trim();
     if (pages) fd.append('pages', pages);
     return fd;
-  }, 'rotated.pdf');
+  }, editName(currentFiles['rotate'], 'rotated_edit.pdf'));
 });
 
 // PAGE NUMBERS
@@ -1764,7 +1771,7 @@ document.getElementById('btn-pagenumbers').addEventListener('click', () => {
     const skip = document.getElementById('pn-skip').value.trim();
     if (skip) fd.append('skip', skip);
     return fd;
-  }, 'numbered.pdf');
+  }, editName(currentFiles['pagenumbers'], 'numbered_edit.pdf'));
 });
 
 // REORDER
@@ -1778,7 +1785,7 @@ document.getElementById('btn-reorder').addEventListener('click', () => {
     fd.append('file', file);
     fd.append('pages', pages);
     return fd;
-  }, 'reordered.pdf');
+  }, editName(currentFiles['reorder'], 'reordered_edit.pdf'));
 });
 
 // COMPRESS
@@ -1790,7 +1797,7 @@ document.getElementById('btn-compress').addEventListener('click', () => {
     fd.append('file', file);
     fd.append('quality', segValue('compress-q-seg'));
     return fd;
-  }, 'compressed.pdf');
+  }, editName(currentFiles['compress'], 'compressed_edit.pdf'));
 });
 
 // WATERMARK
@@ -1818,7 +1825,7 @@ document.getElementById('btn-watermark').addEventListener('click', () => {
     const pages = document.getElementById('wm-pages').value.trim();
     if (pages) fd.append('pages', pages);
     return fd;
-  }, 'watermarked.pdf');
+  }, editName(currentFiles['watermark'], 'watermarked_edit.pdf'));
 });
 
 // TO IMAGE
@@ -1871,7 +1878,7 @@ document.getElementById('btn-protect').addEventListener('click', () => {
       fd.append('permissions', perms.join(','));
     }
     return fd;
-  }, 'protected.pdf');
+  }, editName(currentFiles['protect'], 'protected_edit.pdf'));
 });
 
 // UNLOCK
@@ -1885,7 +1892,7 @@ document.getElementById('btn-unlock').addEventListener('click', () => {
     fd.append('file', file);
     fd.append('password', pw);
     return fd;
-  }, 'unlocked.pdf');
+  }, editName(currentFiles['unlock'], 'unlocked_edit.pdf'));
 });
 
 // EXTRACT TEXT
@@ -1898,7 +1905,7 @@ document.getElementById('btn-extract').addEventListener('click', () => {
     const pages = document.getElementById('extract-pages').value.trim();
     if (pages) fd.append('pages', pages);
     return fd;
-  }, 'extracted.txt');
+  }, editName(currentFiles['extract'], 'extracted_edit.txt').replace(/_edit\.pdf$/, '_edit.txt'));
 });
 </script>
 </body>
