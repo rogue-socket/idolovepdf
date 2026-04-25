@@ -562,6 +562,17 @@
       font-size: 13px;
       padding: 20px 0;
     }
+
+    /* ── Shared file indicator ───────────────────────────────────────── */
+    .shared-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600; color: var(--accent);
+      background: var(--accent-light);
+      border: 1px solid rgba(91,106,240,.25);
+      border-radius: 999px;
+      padding: 2px 10px;
+      margin-left: 8px;
+    }
     .divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
   </style>
 </head>
@@ -1340,6 +1351,11 @@ document.querySelectorAll('.nav-item').forEach(btn => {
     btn.classList.add('active');
     document.getElementById(`section-${tool}`).classList.add('active');
     document.getElementById('main').scrollTop = 0;
+
+    // Auto-populate shared file if this tool has no file yet
+    if (sharedFile && SINGLE_FILE_TOOLS.includes(tool) && !currentFiles[tool] && dropZoneSetters[tool]) {
+      dropZoneSetters[tool](sharedFile, true);
+    }
   });
 });
 
@@ -1426,6 +1442,12 @@ function showPreviewLoading(container) {
 ══════════════════════════════════════════════════════════════════════════ */
 const currentFiles = {};
 const previewCache = {};
+const dropZoneSetters = {};
+
+let sharedFile = null;
+let sharedPreviewData = null;
+
+const SINGLE_FILE_TOOLS = ['split','rotate','pagenumbers','reorder','compress','watermark','toimage','protect','unlock','extract'];
 
 function singleDropZone(toolId, opts = {}) {
   const dz = document.getElementById(`dz-${toolId}`);
@@ -1433,10 +1455,16 @@ function singleDropZone(toolId, opts = {}) {
   const previewEl = document.getElementById(`preview-${toolId}`);
   const showPreview = opts.preview !== false && previewEl;
 
-  function setFile(file) {
+  function setFile(file, isShared) {
     if (!file) return;
     currentFiles[toolId] = file;
     delete previewCache[toolId];
+
+    // Update shared file when user explicitly uploads (not when auto-populated)
+    if (!isShared) {
+      sharedFile = file;
+      sharedPreviewData = null; // will be set after fetch
+    }
 
     // Transform the drop zone into a file badge
     dz.classList.add('has-file');
@@ -1446,6 +1474,7 @@ function singleDropZone(toolId, opts = {}) {
         <span class="file-badge-name">${file.name}</span>
         <span class="file-badge-size">${fmtBytes(file.size)}</span>
         <span class="file-badge-pages" id="pages-${toolId}"></span>
+        ${isShared ? '<span class="shared-badge">shared</span>' : ''}
         <button class="file-badge-clear" title="Remove file">&#x2715;</button>
       </div>`;
     dz.querySelector('.file-badge-clear').addEventListener('click', (e) => {
@@ -1453,12 +1482,23 @@ function singleDropZone(toolId, opts = {}) {
       clearFile();
     });
 
+    // If shared and we already have preview data, reuse it
+    if (isShared && sharedPreviewData && showPreview) {
+      previewCache[toolId] = sharedPreviewData;
+      renderPreview(previewEl, sharedPreviewData);
+      const pagesLabel = document.getElementById(`pages-${toolId}`);
+      if (pagesLabel) pagesLabel.textContent = `${sharedPreviewData.total_pages} page${sharedPreviewData.total_pages !== 1 ? 's' : ''}`;
+      if (typeof triggerLivePreview === 'function') triggerLivePreview(toolId);
+      return;
+    }
+
     // Fetch and show preview for PDFs
     if (showPreview && file.name.toLowerCase().endsWith('.pdf')) {
       showPreviewLoading(previewEl);
       fetchPreview(file).then(data => {
         renderPreview(previewEl, data);
         previewCache[toolId] = data;
+        if (!isShared && data) sharedPreviewData = data;
         if (data) {
           const pagesLabel = document.getElementById(`pages-${toolId}`);
           if (pagesLabel) pagesLabel.textContent = `${data.total_pages} page${data.total_pages !== 1 ? 's' : ''}`;
@@ -1485,6 +1525,9 @@ function singleDropZone(toolId, opts = {}) {
     newFi.addEventListener('change', () => { if (newFi.files[0]) setFile(newFi.files[0]); });
   }
 
+  // Expose setter so nav can auto-populate
+  dropZoneSetters[toolId] = setFile;
+
   fi.addEventListener('change', () => { if (fi.files[0]) setFile(fi.files[0]); });
 
   dz.addEventListener('dragover', e => { e.preventDefault(); if (!dz.classList.contains('has-file')) dz.classList.add('over'); });
@@ -1497,7 +1540,7 @@ function singleDropZone(toolId, opts = {}) {
   });
 }
 
-['split','rotate','pagenumbers','reorder','compress','watermark','toimage','protect','unlock','extract'].forEach(id => {
+SINGLE_FILE_TOOLS.forEach(id => {
   singleDropZone(id);
 });
 
