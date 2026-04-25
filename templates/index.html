@@ -563,6 +563,171 @@
       padding: 20px 0;
     }
 
+
+    /* ── Interactive thumbnail grid ──────────────────────────────────── */
+    .interact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 14px;
+      padding: 8px 0;
+      min-height: 60px;
+    }
+    .interact-thumb {
+      position: relative;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color .15s, box-shadow .15s, opacity .15s, transform .15s;
+      background: #f8f9fb;
+    }
+    .interact-thumb img {
+      display: block;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+    }
+    .interact-thumb:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 16px rgba(91,106,240,.18);
+      transform: translateY(-2px);
+    }
+    .interact-thumb.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91,106,240,.2);
+    }
+    .interact-thumb.excluded {
+      opacity: .35;
+      border-color: var(--border);
+      box-shadow: none;
+    }
+    .interact-thumb.excluded:hover {
+      opacity: .55;
+      border-color: var(--muted);
+      transform: translateY(-1px);
+    }
+    .interact-thumb .cross-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      pointer-events: none;
+    }
+    .interact-thumb.excluded .cross-overlay {
+      display: block;
+    }
+    .interact-thumb .cross-overlay line {
+      stroke: var(--error);
+      stroke-width: 3;
+      stroke-linecap: round;
+      opacity: .7;
+    }
+    .interact-thumb .thumb-label {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,.65);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      padding: 4px 0;
+    }
+    .interact-thumb.selected .thumb-label {
+      background: var(--accent);
+    }
+    .interact-thumb .thumb-badge {
+      position: absolute;
+      top: 6px; right: 6px;
+      min-width: 24px; height: 24px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    .interact-thumb .rotate-indicator {
+      position: absolute;
+      top: 6px; left: 6px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 11px; font-weight: 700;
+      box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    .interact-thumb .skip-overlay {
+      position: absolute;
+      top: 6px; left: 6px;
+      background: var(--muted);
+      color: #fff;
+      border-radius: 6px;
+      padding: 2px 7px;
+      font-size: 10px; font-weight: 700;
+    }
+
+    /* Drag state */
+    .interact-thumb.dragging {
+      opacity: .4;
+      transform: scale(.95);
+    }
+    .interact-thumb.drag-over {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91,106,240,.35);
+      transform: scale(1.03);
+    }
+    .interact-grid .drag-placeholder {
+      border: 2px dashed var(--accent);
+      border-radius: 10px;
+      background: var(--accent-light);
+      min-height: 100px;
+    }
+
+    /* Select all / none toolbar */
+    .interact-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .interact-toolbar .tb-btn {
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text);
+      transition: background .15s, border-color .15s;
+    }
+    .interact-toolbar .tb-btn:hover {
+      background: var(--bg);
+      border-color: var(--accent);
+    }
+    .interact-toolbar .tb-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .interact-toolbar .tb-count {
+      font-size: 12px;
+      color: var(--muted);
+      margin-left: auto;
+    }
+    .text-input-toggle {
+      font-size: 12px;
+      color: var(--accent);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-weight: 600;
+      padding: 0;
+    }
+    .text-input-toggle:hover { text-decoration: underline; }
+    .text-fallback { display: none; margin-top: 10px; }
+    .text-fallback.show { display: block; }
     /* ── Shared file indicator ───────────────────────────────────────── */
     .shared-badge {
       display: inline-flex; align-items: center; gap: 5px;
@@ -689,16 +854,22 @@
       <div id="preview-split"></div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Options</div>
-      <div class="form-group">
-        <label for="split-pages">Page ranges <span style="color:var(--error)">*</span></label>
-        <input type="text" id="split-pages" placeholder="e.g. 1-3,5,8-10" maxlength="200">
-        <span class="hint">Comma-separated ranges and individual pages (1-indexed).</span>
+    <div class="card" id="split-interact-card" style="display:none">
+      <div class="card-title">Select Pages to Extract</div>
+      <div class="interact-toolbar">
+        <button class="tb-btn" id="split-sel-all">Select All</button>
+        <button class="tb-btn" id="split-sel-none">Select None</button>
+        <button class="text-input-toggle" id="split-text-toggle">type manually</button>
+        <span class="tb-count" id="split-count"></span>
       </div>
+      <div class="text-fallback" id="split-text-fallback">
+        <div class="form-group">
+          <input type="text" id="split-pages" placeholder="e.g. 1-3,5,8-10" maxlength="200">
+          <span class="hint">Comma-separated ranges and individual pages (1-indexed).</span>
+        </div>
+      </div>
+      <div class="interact-grid" id="split-grid"></div>
     </div>
-
-    <div id="live-split" class="live-preview" style="display:none"></div>
 
     <div class="card">
       <button class="btn-primary" id="btn-split">Extract Pages</button>
@@ -738,23 +909,26 @@
 
     <div class="card">
       <div class="card-title">Options</div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Rotation angle</label>
-          <div class="seg" id="rotate-deg-seg">
-            <button class="seg-btn active" data-val="90">&#x21BB; 90&deg;</button>
-            <button class="seg-btn" data-val="180">&#x21BB; 180&deg;</button>
-            <button class="seg-btn" data-val="270">&#x21BB; 270&deg;</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="rotate-pages">Pages (optional)</label>
-          <input type="text" id="rotate-pages" placeholder="e.g. 1,3,5-7 (blank = all)">
+      <div class="form-group">
+        <label>Rotation angle</label>
+        <div class="seg" id="rotate-deg-seg">
+          <button class="seg-btn active" data-val="90">&#x21BB; 90&deg;</button>
+          <button class="seg-btn" data-val="180">&#x21BB; 180&deg;</button>
+          <button class="seg-btn" data-val="270">&#x21BB; 270&deg;</button>
         </div>
       </div>
     </div>
 
-    <div id="live-rotate" class="live-preview" style="display:none"></div>
+    <div class="card" id="rotate-interact-card" style="display:none">
+      <div class="card-title">Click Pages to Rotate</div>
+      <div class="interact-toolbar">
+        <button class="tb-btn" id="rotate-sel-all">Select All</button>
+        <button class="tb-btn" id="rotate-sel-none">Select None</button>
+        <input type="hidden" id="rotate-pages">
+        <span class="tb-count" id="rotate-count"></span>
+      </div>
+      <div class="interact-grid" id="rotate-grid"></div>
+    </div>
 
     <div class="card">
       <button class="btn-primary" id="btn-rotate">Rotate</button>
@@ -824,13 +998,18 @@
           <input type="number" id="pn-margin" value="36" min="0" max="200">
         </div>
         <div class="form-group">
-          <label for="pn-skip">Skip pages (optional)</label>
-          <input type="text" id="pn-skip" placeholder="e.g. 1 to skip cover">
+          <input type="hidden" id="pn-skip">
         </div>
       </div>
     </div>
 
-    <div id="live-pagenumbers" class="live-preview" style="display:none"></div>
+    <div class="card" id="pn-interact-card" style="display:none">
+      <div class="card-title">Click Pages to Skip Numbering</div>
+      <div class="interact-toolbar">
+        <span class="tb-count" id="pn-count"></span>
+      </div>
+      <div class="interact-grid" id="pn-grid"></div>
+    </div>
 
     <div class="card">
       <button class="btn-primary" id="btn-pagenumbers">Add Page Numbers</button>
@@ -868,16 +1047,21 @@
       <div id="preview-reorder"></div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Options</div>
-      <div class="form-group">
-        <label for="reorder-pages">New page order <span style="color:var(--error)">*</span></label>
-        <input type="text" id="reorder-pages" placeholder="e.g. 3,1,2,5,4">
-        <span class="hint">Comma-separated 1-indexed page numbers in the desired order.</span>
+    <div class="card" id="reorder-interact-card" style="display:none">
+      <div class="card-title">Drag to Reorder Pages</div>
+      <div class="interact-toolbar">
+        <button class="tb-btn" id="reorder-reverse">Reverse</button>
+        <button class="text-input-toggle" id="reorder-text-toggle">type manually</button>
+        <span class="tb-count" id="reorder-count"></span>
       </div>
+      <div class="text-fallback" id="reorder-text-fallback">
+        <div class="form-group">
+          <input type="text" id="reorder-pages" placeholder="e.g. 3,1,2,5,4">
+          <span class="hint">Comma-separated 1-indexed page numbers in the desired order.</span>
+        </div>
+      </div>
+      <div class="interact-grid" id="reorder-grid"></div>
     </div>
-
-    <div id="live-reorder" class="live-preview" style="display:none"></div>
 
     <div class="card">
       <button class="btn-primary" id="btn-reorder">Reorder Pages</button>
@@ -2039,7 +2223,7 @@ document.getElementById('btn-extract').addEventListener('click', () => {
 
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Live Preview Engine
+   Interactive Grids + Live Preview Engine
 ══════════════════════════════════════════════════════════════════════════ */
 
 function parsePageRanges(input, totalPages) {
@@ -2060,160 +2244,328 @@ function parsePageRanges(input, totalPages) {
   return pages;
 }
 
-function liveHeader() {
-  return '<div class="live-preview-header">Live Preview</div>';
+function crossSvg() {
+  return `<svg class="cross-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%">
+    <line x1="10" y1="10" x2="90" y2="90"/><line x1="90" y1="10" x2="10" y2="90"/>
+  </svg>`;
 }
 
-function thumbHtml(p, extras = '') {
-  return `<div class="preview-thumb${extras}"><img src="${p.data}" alt="Page ${p.page}"><div class="preview-thumb-label">${p.page}</div></div>`;
-}
+/* ── Split: click to toggle ──────────────────────────────────────────── */
+const splitState = { selected: new Set() };
 
-/* ── Reorder ──────────────────────────────────────────────────────────── */
-function updateLiveReorder() {
-  const container = document.getElementById('live-reorder');
-  const data = previewCache['reorder'];
-  if (!data || !data.pages || data.pages.length === 0) { container.style.display = 'none'; return; }
-
-  const input = document.getElementById('reorder-pages').value.trim();
-  if (!input) { container.style.display = 'none'; return; }
-
-  const order = input.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-  if (order.length === 0) { container.style.display = 'none'; return; }
-
-  const pageMap = {};
-  data.pages.forEach(p => { pageMap[p.page] = p; });
-
-  let html = liveHeader() + '<div class="preview-strip">';
-  let pos = 0;
-  for (const num of order) {
-    pos++;
-    const p = pageMap[num];
-    if (p) {
-      html += `<div class="preview-thumb selected">
-        <img src="${p.data}" alt="Page ${p.page}">
-        <div class="preview-thumb-label">${p.page}</div>
-        <div class="reorder-badge">${pos}</div>
-      </div>`;
-    } else if (num >= 1 && num <= data.total_pages) {
-      html += `<div class="preview-thumb selected" style="min-height:100px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)">
-        <div>Page ${num}</div>
-        <div class="preview-thumb-label">${num}</div>
-        <div class="reorder-badge">${pos}</div>
-      </div>`;
-    }
-  }
-  html += '</div>';
-  container.innerHTML = html;
-  container.style.display = '';
-}
-
-document.getElementById('reorder-pages').addEventListener('input', updateLiveReorder);
-
-/* ── Split ────────────────────────────────────────────────────────────── */
-function updateLiveSplit() {
-  const container = document.getElementById('live-split');
+function buildSplitGrid() {
+  const card = document.getElementById('split-interact-card');
+  const grid = document.getElementById('split-grid');
   const data = previewCache['split'];
-  if (!data || !data.pages || data.pages.length === 0) { container.style.display = 'none'; return; }
+  if (!data || !data.pages || data.pages.length === 0) { card.style.display = 'none'; return; }
 
-  const input = document.getElementById('split-pages').value.trim();
-  if (!input) { container.style.display = 'none'; return; }
+  card.style.display = '';
+  splitState.selected = new Set(data.pages.map(p => p.page)); // select all by default
 
-  const selected = parsePageRanges(input, data.total_pages);
-  if (selected.size === 0) { container.style.display = 'none'; return; }
-
-  let html = liveHeader() + '<div class="preview-strip">';
-  for (const p of data.pages) {
-    const isSel = selected.has(p.page);
-    html += `<div class="preview-thumb${isSel ? ' selected' : ' dimmed'}">
-      <img src="${p.data}" alt="Page ${p.page}">
-      <div class="preview-thumb-label">${p.page}${isSel ? ' ✓' : ''}</div>
-    </div>`;
-  }
-  html += '</div>';
-  container.innerHTML = html;
-  container.style.display = '';
+  renderSplitGrid(data);
 }
 
-document.getElementById('split-pages').addEventListener('input', updateLiveSplit);
+function renderSplitGrid(data) {
+  const grid = document.getElementById('split-grid');
+  grid.innerHTML = '';
 
-/* ── Rotate ───────────────────────────────────────────────────────────── */
-function updateLiveRotate() {
-  const container = document.getElementById('live-rotate');
-  const data = previewCache['rotate'];
-  if (!data || !data.pages || data.pages.length === 0) { container.style.display = 'none'; return; }
-
-  const degrees = segValue('rotate-deg-seg') || '90';
-  const pagesInput = document.getElementById('rotate-pages').value.trim();
-  const affected = pagesInput ? parsePageRanges(pagesInput, data.total_pages) : null;
-
-  let html = liveHeader() + '<div class="preview-strip">';
   for (const p of data.pages) {
-    const shouldRotate = !affected || affected.has(p.page);
-    const cls = shouldRotate ? ` rotated-${degrees}` : '';
-    html += `<div class="preview-thumb${cls}${shouldRotate ? ' selected' : ''}">
-      <img src="${p.data}" alt="Page ${p.page}">
-      <div class="preview-thumb-label">${p.page}${shouldRotate ? ' ↻' + degrees + '°' : ''}</div>
-    </div>`;
+    const sel = splitState.selected.has(p.page);
+    const thumb = document.createElement('div');
+    thumb.className = `interact-thumb${sel ? ' selected' : ' excluded'}`;
+    thumb.innerHTML = `<img src="${p.data}" alt="Page ${p.page}">${crossSvg()}<div class="thumb-label">${p.page}</div>`;
+    thumb.addEventListener('click', () => {
+      if (splitState.selected.has(p.page)) splitState.selected.delete(p.page);
+      else splitState.selected.add(p.page);
+      renderSplitGrid(data);
+      syncSplitInput();
+    });
+    grid.appendChild(thumb);
   }
-  html += '</div>';
-  container.innerHTML = html;
-  container.style.display = '';
+  // For pages beyond preview
+  for (let i = data.pages.length + 1; i <= data.total_pages; i++) {
+    const sel = splitState.selected.has(i);
+    const thumb = document.createElement('div');
+    thumb.className = `interact-thumb${sel ? ' selected' : ' excluded'}`;
+    thumb.style.cssText = 'min-height:80px;display:flex;align-items:center;justify-content:center;';
+    thumb.innerHTML = `${crossSvg()}<div style="font-size:14px;font-weight:600;color:var(--muted)">Page ${i}</div><div class="thumb-label">${i}</div>`;
+    thumb.addEventListener('click', () => {
+      if (splitState.selected.has(i)) splitState.selected.delete(i);
+      else splitState.selected.add(i);
+      renderSplitGrid(data);
+      syncSplitInput();
+    });
+    grid.appendChild(thumb);
+  }
+  updateSplitCount();
 }
 
-document.getElementById('rotate-pages').addEventListener('input', updateLiveRotate);
-document.querySelectorAll('#rotate-deg-seg .seg-btn').forEach(btn => {
-  btn.addEventListener('click', () => setTimeout(updateLiveRotate, 10));
+function syncSplitInput() {
+  const sorted = [...splitState.selected].sort((a, b) => a - b);
+  document.getElementById('split-pages').value = sorted.join(',');
+}
+
+function updateSplitCount() {
+  const el = document.getElementById('split-count');
+  el.textContent = `${splitState.selected.size} page${splitState.selected.size !== 1 ? 's' : ''} selected`;
+}
+
+document.getElementById('split-sel-all').addEventListener('click', () => {
+  const data = previewCache['split'];
+  if (!data) return;
+  for (let i = 1; i <= data.total_pages; i++) splitState.selected.add(i);
+  renderSplitGrid(data);
+  syncSplitInput();
+});
+document.getElementById('split-sel-none').addEventListener('click', () => {
+  splitState.selected.clear();
+  const data = previewCache['split'];
+  if (data) renderSplitGrid(data);
+  syncSplitInput();
+});
+document.getElementById('split-text-toggle').addEventListener('click', () => {
+  document.getElementById('split-text-fallback').classList.toggle('show');
 });
 
-/* ── Page Numbers ─────────────────────────────────────────────────────── */
-function updateLivePageNumbers() {
-  const container = document.getElementById('live-pagenumbers');
-  const data = previewCache['pagenumbers'];
-  if (!data || !data.pages || data.pages.length === 0) { container.style.display = 'none'; return; }
+/* ── Reorder: drag and drop ──────────────────────────────────────────── */
+const reorderState = { order: [] }; // array of page objects {page, data}
 
-  container.style.display = '';
+function buildReorderGrid() {
+  const card = document.getElementById('reorder-interact-card');
+  const data = previewCache['reorder'];
+  if (!data || !data.pages || data.pages.length === 0) { card.style.display = 'none'; return; }
+
+  card.style.display = '';
+  // Include all pages (even beyond preview limit)
+  reorderState.order = [];
+  for (const p of data.pages) {
+    reorderState.order.push({ page: p.page, data: p.data });
+  }
+  for (let i = data.pages.length + 1; i <= data.total_pages; i++) {
+    reorderState.order.push({ page: i, data: null });
+  }
+  renderReorderGrid();
+}
+
+let dragSrcIdx = null;
+
+function renderReorderGrid() {
+  const grid = document.getElementById('reorder-grid');
+  grid.innerHTML = '';
+
+  reorderState.order.forEach((p, idx) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'interact-thumb selected';
+    thumb.draggable = true;
+    thumb.dataset.idx = idx;
+
+    if (p.data) {
+      thumb.innerHTML = `<img src="${p.data}" alt="Page ${p.page}"><div class="thumb-badge">${idx + 1}</div><div class="thumb-label">Page ${p.page}</div>`;
+    } else {
+      thumb.style.cssText = 'min-height:80px;display:flex;align-items:center;justify-content:center;';
+      thumb.innerHTML = `<div style="font-size:14px;font-weight:600;color:var(--muted)">Page ${p.page}</div><div class="thumb-badge">${idx + 1}</div><div class="thumb-label">Page ${p.page}</div>`;
+    }
+
+    thumb.addEventListener('dragstart', (e) => {
+      dragSrcIdx = idx;
+      thumb.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    thumb.addEventListener('dragend', () => {
+      thumb.classList.remove('dragging');
+      grid.querySelectorAll('.interact-thumb').forEach(t => t.classList.remove('drag-over'));
+      dragSrcIdx = null;
+    });
+    thumb.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (dragSrcIdx !== null && dragSrcIdx !== idx) {
+        thumb.classList.add('drag-over');
+      }
+    });
+    thumb.addEventListener('dragleave', () => {
+      thumb.classList.remove('drag-over');
+    });
+    thumb.addEventListener('drop', (e) => {
+      e.preventDefault();
+      thumb.classList.remove('drag-over');
+      if (dragSrcIdx === null || dragSrcIdx === idx) return;
+      const item = reorderState.order.splice(dragSrcIdx, 1)[0];
+      reorderState.order.splice(idx, 0, item);
+      dragSrcIdx = null;
+      renderReorderGrid();
+      syncReorderInput();
+    });
+
+    grid.appendChild(thumb);
+  });
+  updateReorderCount();
+}
+
+function syncReorderInput() {
+  document.getElementById('reorder-pages').value = reorderState.order.map(p => p.page).join(',');
+}
+
+function updateReorderCount() {
+  document.getElementById('reorder-count').textContent = `${reorderState.order.length} pages`;
+}
+
+document.getElementById('reorder-reverse').addEventListener('click', () => {
+  reorderState.order.reverse();
+  renderReorderGrid();
+  syncReorderInput();
+});
+document.getElementById('reorder-text-toggle').addEventListener('click', () => {
+  document.getElementById('reorder-text-fallback').classList.toggle('show');
+});
+
+/* ── Rotate: click to toggle ─────────────────────────────────────────── */
+const rotateState = { selected: new Set() };
+
+function buildRotateGrid() {
+  const card = document.getElementById('rotate-interact-card');
+  const data = previewCache['rotate'];
+  if (!data || !data.pages || data.pages.length === 0) { card.style.display = 'none'; return; }
+
+  card.style.display = '';
+  rotateState.selected = new Set(data.pages.map(p => p.page)); // all selected by default
+  renderRotateGrid(data);
+}
+
+function renderRotateGrid(data) {
+  const grid = document.getElementById('rotate-grid');
+  const degrees = segValue('rotate-deg-seg') || '90';
+  grid.innerHTML = '';
+
+  for (const p of data.pages) {
+    const sel = rotateState.selected.has(p.page);
+    const thumb = document.createElement('div');
+    thumb.className = `interact-thumb${sel ? ' selected' : ''}`;
+    const rotClass = sel ? ` rotated-${degrees}` : '';
+    thumb.innerHTML = `<div class="preview-thumb${rotClass}" style="border:none;border-radius:0"><img src="${p.data}" alt="Page ${p.page}"></div>${sel ? `<div class="rotate-indicator">\u21bb ${degrees}\u00b0</div>` : ''}<div class="thumb-label">${p.page}</div>`;
+    thumb.addEventListener('click', () => {
+      if (rotateState.selected.has(p.page)) rotateState.selected.delete(p.page);
+      else rotateState.selected.add(p.page);
+      renderRotateGrid(data);
+      syncRotateInput();
+    });
+    grid.appendChild(thumb);
+  }
+  updateRotateCount();
+}
+
+function syncRotateInput() {
+  const data = previewCache['rotate'];
+  if (!data) return;
+  const all = rotateState.selected.size === data.total_pages;
+  if (all) {
+    document.getElementById('rotate-pages').value = '';
+  } else {
+    document.getElementById('rotate-pages').value = [...rotateState.selected].sort((a, b) => a - b).join(',');
+  }
+}
+
+function updateRotateCount() {
+  document.getElementById('rotate-count').textContent = `${rotateState.selected.size} page${rotateState.selected.size !== 1 ? 's' : ''} selected`;
+}
+
+document.getElementById('rotate-sel-all').addEventListener('click', () => {
+  const data = previewCache['rotate'];
+  if (!data) return;
+  for (let i = 1; i <= data.total_pages; i++) rotateState.selected.add(i);
+  renderRotateGrid(data);
+  syncRotateInput();
+});
+document.getElementById('rotate-sel-none').addEventListener('click', () => {
+  rotateState.selected.clear();
+  const data = previewCache['rotate'];
+  if (data) renderRotateGrid(data);
+  syncRotateInput();
+});
+// Update rotation preview when angle changes
+document.querySelectorAll('#rotate-deg-seg .seg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const data = previewCache['rotate'];
+    if (data) setTimeout(() => renderRotateGrid(data), 10);
+  });
+});
+
+/* ── Page Numbers: click to skip ─────────────────────────────────────── */
+const pnState = { skipped: new Set() };
+
+function buildPnGrid() {
+  const card = document.getElementById('pn-interact-card');
+  const data = previewCache['pagenumbers'];
+  if (!data || !data.pages || data.pages.length === 0) { card.style.display = 'none'; return; }
+
+  card.style.display = '';
+  pnState.skipped = new Set();
+  renderPnGrid(data);
+}
+
+function renderPnGrid(data) {
+  const grid = document.getElementById('pn-grid');
   const pos = document.querySelector('#pn-pos-grid .pos-btn.active')?.dataset.pos || 'bottom-center';
   const fmt = document.getElementById('pn-format').value || '{n}';
   const start = parseInt(document.getElementById('pn-start').value) || 1;
   const fontSize = parseFloat(document.getElementById('pn-fontsize').value) || 12;
-  const skipInput = document.getElementById('pn-skip').value.trim();
-  const skipped = skipInput ? parsePageRanges(skipInput, data.total_pages) : new Set();
+  grid.innerHTML = '';
 
   const posStyles = {
-    'top-left':      'top:6px;left:6px;',
-    'top-center':    'top:6px;left:50%;transform:translateX(-50%);',
-    'top-right':     'top:6px;right:6px;',
-    'bottom-left':   'bottom:22px;left:6px;',
-    'bottom-center': 'bottom:22px;left:50%;transform:translateX(-50%);',
-    'bottom-right':  'bottom:22px;right:6px;',
+    'top-left':      'top:28px;left:6px;',
+    'top-center':    'top:28px;left:50%;transform:translateX(-50%);',
+    'top-right':     'top:28px;right:6px;',
+    'bottom-left':   'bottom:28px;left:6px;',
+    'bottom-center': 'bottom:28px;left:50%;transform:translateX(-50%);',
+    'bottom-right':  'bottom:28px;right:6px;',
   };
 
-  let html = liveHeader() + '<div class="preview-strip">';
   let counter = start;
   for (const p of data.pages) {
-    const skip = skipped.has(p.page);
+    const skip = pnState.skipped.has(p.page);
     const label = skip ? '' : fmt.replace(/\{n\}/g, counter).replace(/\{total\}/g, data.total_pages);
     if (!skip) counter++;
-    const overlaySize = Math.max(8, Math.min(fontSize * 0.8, 18));
-    const overlay = label ? `<div class="page-overlay" style="${posStyles[pos] || posStyles['bottom-center']}font-size:${overlaySize}px;">${label}</div>` : '';
-    html += `<div class="preview-thumb${skip ? '' : ' selected'}" style="position:relative">
-      <img src="${p.data}" alt="Page ${p.page}">
-      ${overlay}
-      <div class="preview-thumb-label">${p.page}</div>
-    </div>`;
+    const overlaySize = Math.max(9, Math.min(fontSize * 0.7, 18));
+    const thumb = document.createElement('div');
+    thumb.className = `interact-thumb${skip ? ' excluded' : ' selected'}`;
+    thumb.style.position = 'relative';
+    thumb.innerHTML = `<img src="${p.data}" alt="Page ${p.page}">${crossSvg()}${skip ? '<div class="skip-overlay">SKIP</div>' : `<div class="page-overlay" style="${posStyles[pos] || posStyles['bottom-center']}font-size:${overlaySize}px;">${label}</div>`}<div class="thumb-label">${p.page}</div>`;
+    thumb.addEventListener('click', () => {
+      if (pnState.skipped.has(p.page)) pnState.skipped.delete(p.page);
+      else pnState.skipped.add(p.page);
+      renderPnGrid(data);
+      syncPnInput();
+    });
+    grid.appendChild(thumb);
   }
-  html += '</div>';
-  container.innerHTML = html;
+  updatePnCount(data);
 }
 
-['pn-format','pn-start','pn-fontsize','pn-margin','pn-skip'].forEach(id => {
-  document.getElementById(id).addEventListener('input', updateLivePageNumbers);
+function syncPnInput() {
+  document.getElementById('pn-skip').value = [...pnState.skipped].sort((a, b) => a - b).join(',');
+}
+
+function updatePnCount(data) {
+  const el = document.getElementById('pn-count');
+  const numbered = (data ? data.total_pages : 0) - pnState.skipped.size;
+  el.textContent = `${numbered} page${numbered !== 1 ? 's' : ''} numbered` + (pnState.skipped.size > 0 ? `, ${pnState.skipped.size} skipped` : '');
+}
+
+// Re-render page numbers grid when options change
+['pn-format','pn-start','pn-fontsize','pn-margin'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    const data = previewCache['pagenumbers'];
+    if (data) renderPnGrid(data);
+  });
 });
 document.querySelectorAll('#pn-pos-grid .pos-btn').forEach(btn => {
-  btn.addEventListener('click', () => setTimeout(updateLivePageNumbers, 10));
+  btn.addEventListener('click', () => {
+    const data = previewCache['pagenumbers'];
+    if (data) setTimeout(() => renderPnGrid(data), 10);
+  });
 });
 
-/* ── Watermark ────────────────────────────────────────────────────────── */
+/* ── Watermark live preview (kept as-is, uses live-watermark container) ── */
 function updateLiveWatermark() {
   const container = document.getElementById('live-watermark');
   const data = previewCache['watermark'];
@@ -2234,18 +2586,18 @@ function updateLiveWatermark() {
 
   const overlaySize = Math.max(10, Math.min(fontSize * 0.35, 28));
 
-  let html = liveHeader() + '<div class="preview-strip">';
+  let h = '<div class="live-preview-header">Live Preview</div><div class="interact-grid">';
   for (const p of data.pages) {
     const show = !wmPages || wmPages.has(p.page);
     const overlay = show ? `<div class="wm-overlay" style="color:${color};opacity:${opacity};font-size:${overlaySize}px;--wm-angle:${angle}deg">${text}</div>` : '';
-    html += `<div class="preview-thumb" style="position:relative">
+    h += `<div class="interact-thumb" style="position:relative;cursor:default">
       <img src="${p.data}" alt="Page ${p.page}">
       ${overlay}
-      <div class="preview-thumb-label">${p.page}</div>
+      <div class="thumb-label">${p.page}</div>
     </div>`;
   }
-  html += '</div>';
-  container.innerHTML = html;
+  h += '</div>';
+  container.innerHTML = h;
   container.style.display = '';
 }
 
@@ -2261,7 +2613,7 @@ document.querySelectorAll('#wm-mode-seg .seg-btn').forEach(btn => {
   btn.addEventListener('click', () => setTimeout(updateLiveWatermark, 10));
 });
 
-/* ── Merge ────────────────────────────────────────────────────────────── */
+/* ── Merge live preview ──────────────────────────────────────────────── */
 const mergePreviewCache = [];
 
 async function updateLiveMerge() {
@@ -2269,24 +2621,17 @@ async function updateLiveMerge() {
   const files = flMerge.getFiles();
   if (files.length === 0) { container.style.display = 'none'; mergePreviewCache.length = 0; return; }
 
-  // Fetch previews for any new files
-  while (mergePreviewCache.length < files.length) {
-    mergePreviewCache.push(null);
-  }
+  while (mergePreviewCache.length < files.length) mergePreviewCache.push(null);
   mergePreviewCache.length = files.length;
 
   let needsFetch = false;
   for (let i = 0; i < files.length; i++) {
-    if (!mergePreviewCache[i] || mergePreviewCache[i]._file !== files[i]) {
-      needsFetch = true;
-      break;
-    }
+    if (!mergePreviewCache[i] || mergePreviewCache[i]._file !== files[i]) { needsFetch = true; break; }
   }
 
   if (needsFetch) {
     container.style.display = '';
-    container.innerHTML = liveHeader() + '<div class="preview-loading"><span class="spinner-sm"></span> Loading previews...</div>';
-
+    container.innerHTML = '<div class="live-preview-header">Live Preview</div><div class="preview-loading"><span class="spinner-sm"></span> Loading previews...</div>';
     for (let i = 0; i < files.length; i++) {
       if (!mergePreviewCache[i] || mergePreviewCache[i]._file !== files[i]) {
         const data = await fetchPreview(files[i]);
@@ -2296,7 +2641,7 @@ async function updateLiveMerge() {
     }
   }
 
-  let html = liveHeader() + '<div class="preview-strip">';
+  let h = '<div class="live-preview-header">Live Preview</div><div class="interact-grid">';
   let globalPage = 0;
   for (let i = 0; i < mergePreviewCache.length; i++) {
     const data = mergePreviewCache[i];
@@ -2304,42 +2649,35 @@ async function updateLiveMerge() {
     const fileColor = ['#5b6af0','#22c55e','#f59e0b','#ef4444','#a855f7','#06b6d4','#ec4899'][i % 7];
     for (const p of data.pages) {
       globalPage++;
-      html += `<div class="preview-thumb" style="border-color:${fileColor}">
+      h += `<div class="interact-thumb" style="border-color:${fileColor};cursor:default">
         <img src="${p.data}" alt="Page ${globalPage}">
-        <div class="preview-thumb-label" style="background:${fileColor}">${globalPage}</div>
+        <div class="thumb-label" style="background:${fileColor}">${globalPage}</div>
       </div>`;
     }
     if (data.total_pages > data.pages.length) {
-      html += `<div class="preview-more" style="border-color:${fileColor}">+${data.total_pages - data.pages.length}<br>more</div>`;
+      h += `<div class="preview-more" style="border-color:${fileColor}">+${data.total_pages - data.pages.length}<br>more</div>`;
       globalPage += data.total_pages - data.pages.length;
     }
   }
-  html += '</div>';
-  if (globalPage === 0) {
-    container.style.display = 'none';
-    return;
-  }
-  container.innerHTML = html;
+  h += '</div>';
+  if (globalPage === 0) { container.style.display = 'none'; return; }
+  container.innerHTML = h;
   container.style.display = '';
 }
 
-// Patch FileListMgr render to trigger live merge preview
 const _origMergeRender = flMerge.render.bind(flMerge);
-flMerge.render = function() {
-  _origMergeRender();
-  updateLiveMerge();
-};
+flMerge.render = function() { _origMergeRender(); updateLiveMerge(); };
 
 /* ── Trigger helper ───────────────────────────────────────────────────── */
 function triggerLivePreview(toolId) {
-  const updaters = {
-    reorder: updateLiveReorder,
-    split: updateLiveSplit,
-    rotate: updateLiveRotate,
-    pagenumbers: updateLivePageNumbers,
+  const builders = {
+    reorder: buildReorderGrid,
+    split: buildSplitGrid,
+    rotate: buildRotateGrid,
+    pagenumbers: buildPnGrid,
     watermark: updateLiveWatermark,
   };
-  if (updaters[toolId]) updaters[toolId]();
+  if (builders[toolId]) builders[toolId]();
 }
 </script>
 </body>
