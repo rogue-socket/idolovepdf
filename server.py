@@ -25,6 +25,8 @@ from typing import Optional
 from urllib.parse import quote
 
 import fitz as _fitz  # PyMuPDF – used directly for preview
+import json as _json
+APP_VERSION = _json.load(open(os.path.join(os.path.dirname(__file__), "version.json")))["version"]
 from flask import Flask, jsonify, render_template, request, send_file
 
 # Make pdftool importable from the same directory
@@ -38,7 +40,7 @@ app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB upload cap
 @app.route("/api/health", methods=["GET"])
 def api_health():
     port = int(os.environ.get("PORT", 3003))
-    return jsonify(service="pdf", status="ok", port=port), 200
+    return jsonify(service="pdf", status="ok", version=APP_VERSION, port=port), 200
 
 
 # ══════════════════════════════════════════════════════════════════════════════
